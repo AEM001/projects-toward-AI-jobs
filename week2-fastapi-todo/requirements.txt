@@ -1,0 +1,23 @@
+# FastAPI 框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 数据库
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
+
+# 数据验证
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# 环境变量
+python-dotenv==1.0.0
+
+# 测试框架
+pytest==7.4.3
+pytest-cov==4.1.0
+httpx==0.25.2
+
+# 开发工具
+black==23.12.0
+flake8==6.1.0
