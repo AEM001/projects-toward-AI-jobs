@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from src.storage.json_storage import JSONStorage
 from src.models.task import Task,Status,Priority
+from src.utils.exceptions import StorageException
 # 测试任务：新建任务，保存，读取，修改
 class TestJSONStorage:
 
@@ -61,7 +62,7 @@ class TestJSONStorage:
     def test_load_corrupted_json(self, temp_storage):
         with open(temp_storage.file_path, 'w') as f:
             f.write("这不是有效的 JSON")
-        with pytest.raises(ValueError):
+        with pytest.raises(StorageException):
             temp_storage.load()
     
     def test_load_invalid_task_data(self, temp_storage):
@@ -69,7 +70,7 @@ class TestJSONStorage:
         with open(temp_storage.file_path, 'w') as f:
             json.dump(invalid_data, f)
         
-        with pytest.raises(ValueError):
+        with pytest.raises(StorageException):
             temp_storage.load()
     
     def test_clear_storage(self, temp_storage, sample_tasks):

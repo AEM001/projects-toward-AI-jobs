@@ -3,6 +3,7 @@ import pytest
 from src.models.task import Status, Priority
 from src.services.task_service import TaskService
 from src.storage.json_storage import JSONStorage
+from src.utils.exceptions import TaskNotFoundException
 
 
 class TestTaskService:
@@ -34,7 +35,7 @@ class TestTaskService:
         assert fetched.title == "t1"
 
     def test_get_task_not_found_raises(self, service):
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskNotFoundException):
             service.get_task("not-exist")
 
     def test_list_tasks_filter_by_status(self, service):
@@ -64,7 +65,7 @@ class TestTaskService:
         assert fetched.status == Status.DONE
 
     def test_update_task_status_not_found_raises(self, service):
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskNotFoundException):
             service.update_task_status("not-exist", Status.DONE)
 
     def test_delete_task_success(self, service):
@@ -76,9 +77,9 @@ class TestTaskService:
         assert len(tasks) == 1
         assert str(tasks[0].id) == str(t2.id)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskNotFoundException):
             service.get_task(t1.id)
 
     def test_delete_task_not_found_raises(self, service):
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskNotFoundException):
             service.delete_task("not-exist")

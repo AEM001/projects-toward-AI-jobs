@@ -334,13 +334,7 @@ pip install -r requirements.txt
 # 添加任务
 python task.py add "学习 Python logging 模块" --priority high
 
-# 列出所有任务
-python task.py list
-
-# 只列出待办任务
-python task.py list --status pending
-
-# 标记任务完成
+# 标记任务完成（使用列表序号）
 python task.py done 1
 
 # 更新任务状态

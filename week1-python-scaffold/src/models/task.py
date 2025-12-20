@@ -46,5 +46,9 @@ class Task:
         self.status=new_status
         self.updated_at=datetime.now()
     
+    def update_priority(self,new_priority:Priority)->None:
+        self.priority=new_priority
+        self.updated_at=datetime.now()
+    
     def __str__(self):
         return f"Task({self.id}): {self.title} [{self.status.name}]"
