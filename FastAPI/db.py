@@ -10,6 +10,7 @@ engine=create_engine(DATABASE_URL,connect_args={"check_same_thread":False})
 # create session class
 SessionLocal=sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
+
 # create base class
 Base=declarative_base()
 
