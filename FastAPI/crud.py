@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from schemas import TodoCreate, TodoUpdate
 from db import TodoDB
 
@@ -13,27 +12,24 @@ def create_todo(db: Session, todo: TodoCreate) -> TodoDB:
 def list_todos(db: Session) -> list[TodoDB]:
     return db.query(TodoDB).order_by(TodoDB.id.asc()).all()
 
-def get_todo_or_404(db: Session, id: int) -> TodoDB:
-    db_todo = db.query(TodoDB).filter(TodoDB.id == id).first()
-    if db_todo is None:
-        raise HTTPException(status_code=404, detail="Todo not found")
-    return db_todo
+def get_todo(db: Session, id: int) -> TodoDB | None:
+    """获取单个 Todo，不存在返回 None"""
+    return db.query(TodoDB).filter(TodoDB.id == id).first()
 
-def update_todo(db: Session, id: int, update: TodoUpdate) -> TodoDB:
-    db_todo = get_todo_or_404(db, id)
-
+def update_todo(db: Session, todo: TodoDB, update: TodoUpdate) -> TodoDB:
+    """更新 Todo 对象（调用方需先查询）"""
     if update.title is not None:
-        db_todo.title = update.title
+        todo.title = update.title
     if update.done is not None:
-        db_todo.done = update.done
+        todo.done = update.done
 
     db.flush()
-    db.refresh(db_todo)
-    return db_todo
+    db.refresh(todo)
+    return todo
 
-def delete_todo(db: Session, id: int) -> None:
-    db_todo = get_todo_or_404(db, id)
-    db.delete(db_todo)
+def delete_todo(db: Session, todo: TodoDB) -> None:
+    """删除 Todo 对象（调用方需先查询）"""
+    db.delete(todo)
     db.flush()
 
 # ========================================
@@ -41,7 +37,21 @@ def delete_todo(db: Session, id: int) -> None:
 # ========================================
 
 def test_tx_fail(db: Session) -> None:
-    """测试事务自动回滚 - 失败案例"""
+    """测试事务自动回滚 - 失败案例（抛出普通异常）"""
     db.add(TodoDB(title="tx fail", done=False))
+    db.flush()
     # 抛出异常会触发get_db_tx的rollback
-    raise HTTPException(status_code=400, detail="force fail")
+    raise ValueError("force fail for testing")
+
+def get_todo(db: Session, id:int)->TodoDB |None:
+    return db.query(TodoDB).filter(TodoDB.id==id).first()
+
+def get_todo_service(db:Session,id:int)->TodoDB:
+    todo=get_todo(db,id)
+    if(todo is None):
+        raise HTTPException(status_code=404,detail="",)
+    return todo
+
+@app.get("/todos/{id}")
+def get_todo(id:int,db=Depends(get_db)):
+    return services.get_todo_service(db,id)
