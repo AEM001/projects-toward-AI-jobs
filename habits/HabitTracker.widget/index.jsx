@@ -20,18 +20,18 @@ export const className = `
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  width: 800px;
+  width: 420px;
   background: linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.98));
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid rgba(75, 85, 99, 0.3);
   color: #f9fafb;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
   z-index: 1000;
@@ -51,19 +51,44 @@ const getDayOfWeek = (date) => {
   return date.getDay(); // 0 = Sunday, 6 = Saturday
 };
 
-const getWeeksData2026 = () => {
+const getWeeksData3Months = () => {
   const weeks = [];
   const today = new Date();
-  const startDate = new Date(2026, 0, 1); // January 1, 2026
-  const endDate = new Date(2026, 11, 31); // December 31, 2026
   
-  // Adjust to start from Sunday before Jan 1
+  // Always show 2026 data only
+  const currentMonth = today.getMonth(); // 0-11
+  const targetYear = 2026;
+  
+  // Determine which 3 months to show (stay within 2026)
+  let startMonth, endMonth;
+  
+  if (currentMonth === 0 || currentMonth === 1) {
+    // Jan or Feb: show Jan, Feb, Mar (months 0, 1, 2)
+    startMonth = 0;
+    endMonth = 2;
+  } else if (currentMonth === 10 || currentMonth === 11) {
+    // Nov or Dec: show Oct, Nov, Dec (months 9, 10, 11)
+    startMonth = 9;
+    endMonth = 11;
+  } else {
+    // Other months: show current + next 2 months
+    startMonth = currentMonth;
+    endMonth = currentMonth + 2;
+  }
+  
+  // Start from first day of start month
+  const startDate = new Date(targetYear, startMonth, 1);
+  
+  // End at last day of end month
+  const endDate = new Date(targetYear, endMonth + 1, 0);
+  
+  // Adjust to start from Sunday
   const dayOfWeek = startDate.getDay();
   startDate.setDate(startDate.getDate() - dayOfWeek);
   
   let currentDate = new Date(startDate);
   
-  while (currentDate <= endDate || weeks.length < 53) {
+  while (currentDate <= endDate) {
     const week = [];
     for (let d = 0; d < 7; d++) {
       const date = new Date(currentDate);
@@ -77,9 +102,6 @@ const getWeeksData2026 = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
     weeks.push(week);
-    
-    // Stop after we've covered all of 2026
-    if (currentDate.getFullYear() > 2026) break;
   }
   
   return weeks;
@@ -113,7 +135,7 @@ function HabitTrackerInner() {
   const [hoveredCell, setHoveredCell] = React.useState(null);
   const [stats, setStats] = React.useState({ total: 0, completed: 0, streak: 0 });
 
-  const weeks = React.useMemo(() => getWeeksData2026(), []);
+  const weeks = React.useMemo(() => getWeeksData3Months(), []);
 
   // Load data on mount
   React.useEffect(() => {
@@ -199,19 +221,19 @@ function HabitTrackerInner() {
     <>
       <style>{`
         .habit-header {
-          padding: 20px 24px;
+          padding: 12px 16px;
           background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
           border-bottom: 1px solid rgba(75, 85, 99, 0.3);
         }
         
         .habit-title {
-          font-size: 18px;
+          font-size: 14px;
           font-weight: 600;
           background: linear-gradient(135deg, #60a5fa, #a78bfa);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin-bottom: 16px;
+          margin-bottom: 10px;
         }
         
         .habit-selector {
@@ -221,18 +243,18 @@ function HabitTrackerInner() {
         }
         
         .habit-btn {
-          padding: 8px 16px;
-          border-radius: 8px;
+          padding: 6px 12px;
+          border-radius: 6px;
           border: 1px solid rgba(75, 85, 99, 0.3);
           background: rgba(31, 41, 55, 0.5);
           color: #d1d5db;
           cursor: pointer;
           transition: all 0.2s ease;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 500;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
         }
         
         .habit-btn:hover {
@@ -248,57 +270,27 @@ function HabitTrackerInner() {
         }
         
         .habit-color-dot {
-          width: 8px;
-          height: 8px;
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
         }
         
-        .stats-bar {
-          display: flex;
-          gap: 24px;
-          padding: 16px 24px;
-          background: rgba(17, 24, 39, 0.5);
-          border-bottom: 1px solid rgba(75, 85, 99, 0.3);
-        }
-        
-        .stat-item {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        
-        .stat-label {
-          font-size: 11px;
-          color: #9ca3af;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        
-        .stat-value {
-          font-size: 20px;
-          font-weight: 600;
-          background: linear-gradient(135deg, #60a5fa, #a78bfa);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
         .heatmap-container {
-          padding: 24px;
+          padding: 16px;
           overflow-x: auto;
         }
         
         .month-labels {
           display: flex;
-          margin-bottom: 8px;
-          margin-left: 32px;
+          margin-bottom: 6px;
+          margin-left: 28px;
           position: relative;
-          height: 16px;
+          height: 14px;
         }
         
         .month-label {
           position: absolute;
-          font-size: 10px;
+          font-size: 9px;
           color: #9ca3af;
           font-weight: 500;
         }
@@ -317,12 +309,12 @@ function HabitTrackerInner() {
         }
         
         .day-label {
-          height: 12px;
-          font-size: 10px;
+          height: 10px;
+          font-size: 9px;
           color: #9ca3af;
           display: flex;
           align-items: center;
-          line-height: 12px;
+          line-height: 10px;
         }
         
         .week-column {
@@ -332,8 +324,8 @@ function HabitTrackerInner() {
         }
         
         .day-cell {
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           border-radius: 2px;
           cursor: default;
           transition: all 0.15s ease;
@@ -380,14 +372,14 @@ function HabitTrackerInner() {
         }
         
         .edit-btn {
-          margin-top: 16px;
+          margin-top: 12px;
           width: 100%;
-          padding: 10px;
+          padding: 8px;
           background: linear-gradient(135deg, #3b82f6, #2563eb);
           border: 1px solid rgba(59, 130, 246, 0.3);
           color: #ffffff;
-          border-radius: 8px;
-          font-size: 13px;
+          border-radius: 6px;
+          font-size: 11px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -416,30 +408,13 @@ function HabitTrackerInner() {
         </div>
       </div>
 
-      <div className="stats-bar">
-        <div className="stat-item">
-          <div className="stat-label">Current Streak</div>
-          <div className="stat-value">{stats.streak} days</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">Total Days</div>
-          <div className="stat-value">{stats.completed}</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">Completion Rate</div>
-          <div className="stat-value">
-            {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
-          </div>
-        </div>
-      </div>
-
       <div className="heatmap-container">
         <div className="month-labels">
           {monthLabels.map(({ weekIndex, label }) => (
             <div
               key={weekIndex}
               className="month-label"
-              style={{ left: `${weekIndex * 15}px` }}
+              style={{ left: `${weekIndex * 13}px` }}
             >
               {label}
             </div>
