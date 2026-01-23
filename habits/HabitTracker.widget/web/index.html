@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker 2026 - Edit Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f9fafb;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            color: #fbbf24;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .habits-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+
+        .habit-tab {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(75, 85, 99, 0.3);
+            background: rgba(31, 41, 55, 0.5);
+            color: #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .habit-tab:hover {
+            background: rgba(55, 65, 81, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .habit-tab.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
+            border-color: rgba(139, 92, 246, 0.5);
+            color: #f9fafb;
+        }
+
+        .habit-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+            border-radius: 12px;
+            padding: 20px 32px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .heatmap-container {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            overflow-x: auto;
+        }
+
+        .month-labels {
+            display: flex;
+            margin-bottom: 12px;
+            margin-left: 40px;
+            gap: 0;
+        }
+
+        .month-label {
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: left;
+        }
+
+        .heatmap-grid-container {
+            display: flex;
+        }
+
+        .day-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-right: 12px;
+            padding-top: 0px;
+        }
+
+        .day-label {
+            height: 14px;
+            font-size: 10px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            line-height: 14px;
+        }
+
+        .heatmap-grid {
+            display: flex;
+            gap: 4px;
+        }
+
+        .week-column {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .day-cell {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .day-cell:hover {
+            transform: scale(1.4);
+            border-color: rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+
+        .day-cell.today {
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .day-cell.future {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .day-cell.locked {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .day-cell.locked::after {
+            content: '🔒';
+            position: absolute;
+            font-size: 8px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tooltip {
+            position: fixed;
+            background: rgba(17, 24, 39, 0.98);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .tooltip-date {
+            font-weight: 600;
+            color: #f9fafb;
+            margin-bottom: 6px;
+        }
+
+        .tooltip-status {
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-action {
+            color: #60a5fa;
+            font-size: 11px;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
+        .error {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            color: #fca5a5;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Habit Tracker 2026</h1>
+            <p>Click on any day to toggle completion (editable for past 7 days only)</p>
+        </div>
+
+        <div class="warning">
+            ⚠️ You can only edit habits from the past 7 days. Older entries are locked.
+        </div>
+
+        <div id="app">
+            <div class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <div id="tooltip" class="tooltip">
+        <div class="tooltip-date"></div>
+        <div class="tooltip-status"></div>
+        <div class="tooltip-action"></div>
+    </div>
+
+    <script>
+        const HABITS = [
+            { id: "coding", name: "Coding", color: "#3b82f6" },
+            { id: "no_scrolling", name: "No Scrolling", color: "#10b981" },
+            { id: "journal", name: "Journal", color: "#8b5cf6" },
+        ];
+
+        const API_BASE = "http://127.0.0.1:8788";
+        const DAYS_EDITABLE = 7;
+
+        let habitData = {};
+        let selectedHabit = HABITS[0].id;
+
+        function getDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getWeeksData2026() {
+            const weeks = [];
+            const today = new Date();
+            const startDate = new Date(2026, 0, 1);
+            const endDate = new Date(2026, 11, 31);
+            
+            const dayOfWeek = startDate.getDay();
+            startDate.setDate(startDate.getDate() - dayOfWeek);
+            
+            let currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate || weeks.length < 53) {
+                const week = [];
+                for (let d = 0; d < 7; d++) {
+                    const date = new Date(currentDate);
+                    const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
+                    week.push({
+                        date: new Date(date),
+                        dateString: getDateString(date),
+                        isToday: getDateString(date) === getDateString(today),
+                        isFuture: date > today,
+                        isLocked: daysDiff > DAYS_EDITABLE,
+                        isIn2026: date.getFullYear() === 2026,
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                weeks.push(week);
+                
+                if (currentDate.getFullYear() > 2026) break;
+            }
+            
+            return weeks;
+        }
+
+        function getMonthLabels(weeks) {
+            const labels = [];
+            let lastMonth = -1;
+            
+            weeks.forEach((week, weekIndex) => {
+                const firstDay = week[0].date;
+                const month = firstDay.getMonth();
+                
+                if (month !== lastMonth) {
+                    labels.push({
+                        weekIndex,
+                        label: firstDay.toLocaleDateString('en-US', { month: 'short' })
+                    });
+                    lastMonth = month;
+                }
+            });
+            
+            return labels;
+        }
+
+        function calculateStats(habitId) {
+            if (!habitData[habitId]) {
+                return { total: 0, completed: 0, streak: 0 };
+            }
+
+            const data = habitData[habitId];
+            const completed = Object.values(data).filter(Boolean).length;
+            const total = Object.keys(data).length;
+
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = getDateString(date);
+                if (data[dateStr]) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+
+            return { total, completed, streak };
+        }
+
+        function getIntensity(dateString, habitId) {
+            if (!habitData[habitId] || !habitData[habitId][dateString]) {
+                return 0;
+            }
+            return 1;
+        }
+
+        function getColor(intensity, habitId) {
+            if (intensity === 0) return "rgba(55, 65, 81, 0.5)";
+            const habit = HABITS.find(h => h.id === habitId);
+            return habit?.color || "#10b981";
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_BASE}/habits`);
+                const result = await response.json();
+                habitData = result.habits || {};
+                render();
+            } catch (error) {
+                document.getElementById('app').innerHTML = `
+                    <div class="error">
+                        Failed to load data. Make sure the backend server is running on port 8788.
+                        <br><br>Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function toggleHabit(dateString, habitId) {
+            if (!habitData[habitId]) {
+                habitData[habitId] = {};
+            }
+            habitData[habitId][dateString] = !habitData[habitId][dateString];
+            
+            try {
+                await fetch(`${API_BASE}/habits/${habitId}/${dateString}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Auth': 'your-secret-token-here'
+                    }
+                });
+                render();
+            } catch (error) {
+                console.error('Failed to save:', error);
+                alert('Failed to save changes. Please try again.');
+                await loadData();
+            }
+        }
+
+        function showTooltip(event, day, habitId) {
+            const tooltip = document.getElementById('tooltip');
+            const intensity = getIntensity(day.dateString, habitId);
+            
+            tooltip.querySelector('.tooltip-date').textContent = day.date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            tooltip.querySelector('.tooltip-status').textContent = intensity > 0 ? '✓ Completed' : '○ Not completed';
+            
+            if (day.isFuture) {
+                tooltip.querySelector('.tooltip-action').textContent = 'Future date';
+            } else if (day.isLocked) {
+                tooltip.querySelector('.tooltip-action').textContent = '🔒 Locked (more than 7 days ago)';
+            } else {
+                tooltip.querySelector('.tooltip-action').textContent = 'Click to toggle';
+            }
+            
+            tooltip.style.left = `${event.clientX + 10}px`;
+            tooltip.style.top = `${event.clientY + 10}px`;
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('show');
+        }
+
+        function render() {
+            const weeks = getWeeksData2026();
+            const monthLabels = getMonthLabels(weeks);
+            const stats = calculateStats(selectedHabit);
+
+            const html = `
+                <div class="habits-tabs">
+                    ${HABITS.map(habit => `
+                        <button class="habit-tab ${selectedHabit === habit.id ? 'active' : ''}" 
+                                onclick="selectedHabit = '${habit.id}'; render();">
+                            <div class="habit-color-dot" style="background-color: ${habit.color}"></div>
+                            ${habit.name}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-value">${stats.streak} days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Days</div>
+                        <div class="stat-value">${stats.completed}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completion Rate</div>
+                        <div class="stat-value">${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</div>
+                    </div>
+                </div>
+
+                <div class="heatmap-container">
+                    <div class="month-labels">
+                        ${monthLabels.map(({ label }) => `
+                            <div class="month-label">${label}</div>
+                        `).join('')}
+                    </div>
+
+                    <div class="heatmap-grid-container">
+                        <div class="day-labels">
+                            <div class="day-label"></div>
+                            <div class="day-label">Mon</div>
+                            <div class="day-label"></div>
+                            <div class="day-label">Wed</div>
+                            <div class="day-label"></div>
+                            <div class="day-label">Fri</div>
+                            <div class="day-label"></div>
+                        </div>
+
+                        <div class="heatmap-grid">
+                            ${weeks.map((week, weekIndex) => `
+                                <div class="week-column">
+                                    ${week.map((day, dayIndex) => {
+                                        const intensity = getIntensity(day.dateString, selectedHabit);
+                                        const color = getColor(intensity, selectedHabit);
+                                        const classes = [
+                                            'day-cell',
+                                            day.isToday ? 'today' : '',
+                                            day.isFuture ? 'future' : '',
+                                            day.isLocked ? 'locked' : ''
+                                        ].filter(Boolean).join(' ');
+                                        
+                                        return `
+                                            <div class="${classes}"
+                                                 style="background-color: ${color}"
+                                                 data-date="${day.dateString}"
+                                                 data-locked="${day.isLocked}"
+                                                 data-future="${day.isFuture}"
+                                                 onmouseenter="showTooltip(event, ${JSON.stringify(day).replace(/"/g, '&quot;')}, '${selectedHabit}')"
+                                                 onmouseleave="hideTooltip()"
+                                                 onclick="handleCellClick('${day.dateString}', ${day.isLocked}, ${day.isFuture})">
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('app').innerHTML = html;
+        }
+
+        function handleCellClick(dateString, isLocked, isFuture) {
+            if (isFuture) {
+                alert('Cannot edit future dates!');
+                return;
+            }
+            if (isLocked) {
+                alert('This date is locked. You can only edit habits from the past 7 days.');
+                return;
+            }
+            toggleHabit(dateString, selectedHabit);
+        }
+
+        // Initialize
+        loadData();
+    </script>
+</body>
+</html>

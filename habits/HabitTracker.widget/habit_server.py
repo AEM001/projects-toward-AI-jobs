@@ -12,6 +12,8 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # === Configuration ===
@@ -48,6 +50,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Get the directory where this script is located
+BASE_DIR = Path(__file__).resolve().parent
+WEB_DIR = BASE_DIR / "web"
+
+# Mount static files if web directory exists
+if WEB_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 # === Helper Functions ===
 def verify_auth(x_auth: str = Header(...)):
@@ -129,17 +139,20 @@ def calculate_longest_streak(dates: List[str]) -> int:
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
+    """Serve the web interface"""
+    web_file = WEB_DIR / "index.html"
+    if web_file.exists():
+        return FileResponse(str(web_file))
     return {
         "status": "ok",
         "service": "Habit Tracker API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "message": "Web interface not found. API is running."
     }
 
 @app.get("/habits")
-async def get_all_habits(x_auth: str = Header(...)):
+async def get_all_habits():
     """Get all habit data"""
-    verify_auth(x_auth)
     data = load_data()
     return {"habits": data}
 

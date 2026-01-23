@@ -2,15 +2,17 @@ import { React, run } from "uebersicht";
 
 // === Configuration ===
 const HABITS = [
-  { id: "exercise", name: "Exercise", color: "#10b981" },
-  { id: "reading", name: "Reading", color: "#3b82f6" },
-  { id: "meditation", name: "Meditation", color: "#8b5cf6" },
-  { id: "coding", name: "Coding", color: "#f59e0b" },
-  { id: "writing", name: "Writing", color: "#ec4899" },
+  { id: "coding", name: "Coding", color: "#3b82f6" },
+  { id: "no_scrolling", name: "No Scrolling", color: "#10b981" },
+  { id: "journal", name: "Journal", color: "#8b5cf6" },
 ];
 
-const DATA_FILE = `${process.env.HOME}/.habit-tracker-data.json`;
-const WEEKS_TO_SHOW = 20; // Show ~5 months of data
+const WEB_INTERFACE_PORT = 8788; // Backend server port
+
+const getHomeDir = async () => {
+  const output = await run('echo $HOME');
+  return output.trim();
+};
 
 // === Styles ===
 export const className = `
@@ -49,29 +51,35 @@ const getDayOfWeek = (date) => {
   return date.getDay(); // 0 = Sunday, 6 = Saturday
 };
 
-const getWeeksData = (weeksCount) => {
+const getWeeksData2026 = () => {
   const weeks = [];
   const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - (weeksCount * 7) + 1);
+  const startDate = new Date(2026, 0, 1); // January 1, 2026
+  const endDate = new Date(2026, 11, 31); // December 31, 2026
   
-  // Adjust to start from Sunday
+  // Adjust to start from Sunday before Jan 1
   const dayOfWeek = startDate.getDay();
   startDate.setDate(startDate.getDate() - dayOfWeek);
   
-  for (let w = 0; w < weeksCount; w++) {
+  let currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate || weeks.length < 53) {
     const week = [];
     for (let d = 0; d < 7; d++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + (w * 7) + d);
+      const date = new Date(currentDate);
       week.push({
         date: new Date(date),
         dateString: getDateString(date),
         isToday: getDateString(date) === getDateString(today),
         isFuture: date > today,
+        isIn2026: date.getFullYear() === 2026,
       });
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     weeks.push(week);
+    
+    // Stop after we've covered all of 2026
+    if (currentDate.getFullYear() > 2026) break;
   }
   
   return weeks;
@@ -79,7 +87,9 @@ const getWeeksData = (weeksCount) => {
 
 const loadData = async () => {
   try {
-    const cmd = `cat "${DATA_FILE}" 2>/dev/null || echo '{}'`;
+    const homeDir = await getHomeDir();
+    const dataFile = `${homeDir}/.habit-tracker-data.json`;
+    const cmd = `cat "${dataFile}" 2>/dev/null || echo '{}'`;
     const output = await run(cmd);
     return JSON.parse(output);
   } catch (e) {
@@ -88,8 +98,10 @@ const loadData = async () => {
 };
 
 const saveData = async (data) => {
+  const homeDir = await getHomeDir();
+  const dataFile = `${homeDir}/.habit-tracker-data.json`;
   const json = JSON.stringify(data, null, 2);
-  const cmd = `cat > "${DATA_FILE}" <<'EOF'\n${json}\nEOF`;
+  const cmd = `cat > "${dataFile}" <<'EOF'\n${json}\nEOF`;
   await run(cmd);
 };
 
@@ -101,7 +113,7 @@ function HabitTrackerInner() {
   const [hoveredCell, setHoveredCell] = React.useState(null);
   const [stats, setStats] = React.useState({ total: 0, completed: 0, streak: 0 });
 
-  const weeks = React.useMemo(() => getWeeksData(WEEKS_TO_SHOW), []);
+  const weeks = React.useMemo(() => getWeeksData2026(), []);
 
   // Load data on mount
   React.useEffect(() => {
@@ -141,15 +153,9 @@ function HabitTrackerInner() {
     setStats({ total, completed, streak });
   }, [habitData, selectedHabit]);
 
-  const toggleHabit = async (dateString) => {
-    const newData = { ...habitData };
-    if (!newData[selectedHabit]) {
-      newData[selectedHabit] = {};
-    }
-    newData[selectedHabit][dateString] = !newData[selectedHabit][dateString];
-    
-    setHabitData(newData);
-    await saveData(newData);
+  const openWebInterface = async () => {
+    const cmd = `open http://127.0.0.1:${WEB_INTERFACE_PORT}`;
+    await run(cmd);
   };
 
   const getIntensity = (dateString) => {
@@ -173,7 +179,7 @@ function HabitTrackerInner() {
       const firstDay = week[0].date;
       const month = firstDay.getMonth();
       
-      if (month !== lastMonth && weekIndex % 4 === 0) {
+      if (month !== lastMonth) {
         labels.push({
           weekIndex,
           label: firstDay.toLocaleDateString('en-US', { month: 'short' })
@@ -329,14 +335,14 @@ function HabitTrackerInner() {
           width: 12px;
           height: 12px;
           border-radius: 2px;
-          cursor: pointer;
+          cursor: default;
           transition: all 0.15s ease;
           border: 1px solid transparent;
         }
         
         .day-cell:hover {
-          transform: scale(1.3);
-          border-color: rgba(255, 255, 255, 0.3);
+          transform: scale(1.2);
+          border-color: rgba(255, 255, 255, 0.2);
           z-index: 10;
           position: relative;
         }
@@ -373,30 +379,29 @@ function HabitTrackerInner() {
           color: #9ca3af;
         }
         
-        .legend {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .edit-btn {
           margin-top: 16px;
-          font-size: 11px;
-          color: #9ca3af;
+          width: 100%;
+          padding: 10px;
+          background: linear-gradient(135deg, #3b82f6, #2563eb);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          color: #ffffff;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
         
-        .legend-item {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        
-        .legend-box {
-          width: 12px;
-          height: 12px;
-          border-radius: 2px;
+        .edit-btn:hover {
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
         }
       `}</style>
 
       <div className="habit-header">
-        <div className="habit-title">🔥 Habit Tracker</div>
+        <div className="habit-title">🔥 Habit Tracker 2026</div>
         <div className="habit-selector">
           {HABITS.map(habit => (
             <button
@@ -464,7 +469,7 @@ function HabitTrackerInner() {
                       key={dayIndex}
                       className={`day-cell ${day.isToday ? 'today' : ''} ${day.isFuture ? 'future' : ''}`}
                       style={{ backgroundColor: color }}
-                      onClick={() => !day.isFuture && toggleHabit(day.dateString)}
+                      onClick={undefined}
                       onMouseEnter={(e) => {
                         if (!day.isFuture) {
                           setHoveredCell({
@@ -489,16 +494,9 @@ function HabitTrackerInner() {
           </div>
         </div>
 
-        <div className="legend">
-          <span>Less</span>
-          <div className="legend-item">
-            <div className="legend-box" style={{ backgroundColor: 'rgba(55, 65, 81, 0.5)' }} />
-          </div>
-          <div className="legend-item">
-            <div className="legend-box" style={{ backgroundColor: getColor(1, selectedHabit) }} />
-          </div>
-          <span>More</span>
-        </div>
+        <button className="edit-btn" onClick={openWebInterface}>
+          ✏️ Edit Habits (Open Web Interface)
+        </button>
       </div>
 
       {hoveredCell && (
