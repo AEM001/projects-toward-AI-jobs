@@ -8,6 +8,7 @@ const HABITS = [
 ];
 
 const WEB_INTERFACE_PORT = 8788; // Backend server port
+const AUTO_SWITCH_INTERVAL = 10000; // Auto-switch tabs every 10 seconds
 
 const getHomeDir = async () => {
   const output = await run('echo $HOME');
@@ -17,10 +18,10 @@ const getHomeDir = async () => {
 // === Styles ===
 export const className = `
   position: fixed;
-  right: 20px;
-  top: 50%;
+  right: 1000px;
+  top: 140px;
   transform: translateY(-50%);
-  width: 420px;
+  width: 306px;
   background: linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.98));
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
@@ -37,6 +38,7 @@ export const className = `
   z-index: 1000;
 `;
 
+// Manual refresh only - no auto refresh to save energy
 export const refreshFrequency = false;
 
 // === Utility Functions ===
@@ -54,33 +56,14 @@ const getDayOfWeek = (date) => {
 const getWeeksData3Months = () => {
   const weeks = [];
   const today = new Date();
-  
-  // Always show 2026 data only
+  const currentYear = today.getFullYear();
   const currentMonth = today.getMonth(); // 0-11
-  const targetYear = 2026;
   
-  // Determine which 3 months to show (stay within 2026)
-  let startMonth, endMonth;
+  // Calculate start date: previous month from today
+  const startDate = new Date(currentYear, currentMonth - 1, 1);
   
-  if (currentMonth === 0 || currentMonth === 1) {
-    // Jan or Feb: show Jan, Feb, Mar (months 0, 1, 2)
-    startMonth = 0;
-    endMonth = 2;
-  } else if (currentMonth === 10 || currentMonth === 11) {
-    // Nov or Dec: show Oct, Nov, Dec (months 9, 10, 11)
-    startMonth = 9;
-    endMonth = 11;
-  } else {
-    // Other months: show current + next 2 months
-    startMonth = currentMonth;
-    endMonth = currentMonth + 2;
-  }
-  
-  // Start from first day of start month
-  const startDate = new Date(targetYear, startMonth, 1);
-  
-  // End at last day of end month
-  const endDate = new Date(targetYear, endMonth + 1, 0);
+  // Calculate end date: next month from today
+  const endDate = new Date(currentYear, currentMonth + 2, 0);
   
   // Adjust to start from Sunday
   const dayOfWeek = startDate.getDay();
@@ -97,7 +80,6 @@ const getWeeksData3Months = () => {
         dateString: getDateString(date),
         isToday: getDateString(date) === getDateString(today),
         isFuture: date > today,
-        isIn2026: date.getFullYear() === 2026,
       });
       currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -134,6 +116,7 @@ function HabitTrackerInner() {
   const [loading, setLoading] = React.useState(true);
   const [hoveredCell, setHoveredCell] = React.useState(null);
   const [stats, setStats] = React.useState({ total: 0, completed: 0, streak: 0 });
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const weeks = React.useMemo(() => getWeeksData3Months(), []);
 
@@ -145,6 +128,19 @@ function HabitTrackerInner() {
       setLoading(false);
     };
     load();
+  }, []);
+
+  // Auto-switch between habits every 10 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSelectedHabit(current => {
+        const currentIndex = HABITS.findIndex(h => h.id === current);
+        const nextIndex = (currentIndex + 1) % HABITS.length;
+        return HABITS[nextIndex].id;
+      });
+    }, AUTO_SWITCH_INTERVAL);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Calculate stats
@@ -178,6 +174,13 @@ function HabitTrackerInner() {
   const openWebInterface = async () => {
     const cmd = `open http://127.0.0.1:${WEB_INTERFACE_PORT}`;
     await run(cmd);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    const data = await loadData();
+    setHabitData(data);
+    setTimeout(() => setRefreshing(false), 500);
   };
 
   const getIntensity = (dateString) => {
@@ -371,9 +374,14 @@ function HabitTrackerInner() {
           color: #9ca3af;
         }
         
-        .edit-btn {
+        .action-buttons {
+          display: flex;
+          gap: 8px;
           margin-top: 12px;
-          width: 100%;
+        }
+        
+        .edit-btn {
+          flex: 1;
           padding: 8px;
           background: linear-gradient(135deg, #3b82f6, #2563eb);
           border: 1px solid rgba(59, 130, 246, 0.3);
@@ -390,10 +398,32 @@ function HabitTrackerInner() {
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
         }
+        
+        .refresh-btn {
+          padding: 8px 12px;
+          background: rgba(16, 185, 129, 0.2);
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          color: #10b981;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+          background: rgba(16, 185, 129, 0.3);
+          transform: translateY(-1px);
+        }
+        
+        .refresh-btn.refreshing {
+          opacity: 0.6;
+          pointer-events: none;
+        }
       `}</style>
 
       <div className="habit-header">
-        <div className="habit-title">🔥 Habit Tracker 2026</div>
+        <div className="habit-title">🔥 Habit Tracker</div>
         <div className="habit-selector">
           {HABITS.map(habit => (
             <button
@@ -469,9 +499,17 @@ function HabitTrackerInner() {
           </div>
         </div>
 
-        <button className="edit-btn" onClick={openWebInterface}>
-          ✏️ Edit Habits (Open Web Interface)
-        </button>
+        <div className="action-buttons">
+          <button className="edit-btn" onClick={openWebInterface}>
+            ✏️ Edit
+          </button>
+          <button 
+            className={`refresh-btn ${refreshing ? 'refreshing' : ''}`}
+            onClick={handleRefresh}
+          >
+            {refreshing ? '⟳' : '↻'} Refresh
+          </button>
+        </div>
       </div>
 
       {hoveredCell && (

@@ -225,6 +225,20 @@ async def bulk_update(updates: BulkUpdate, x_auth: str = Header(...)):
         "updated": len(updates.updates)
     }
 
+@app.delete("/habits/{habit_id}")
+async def delete_habit(habit_id: str, x_auth: str = Header(...)):
+    """Delete a habit and all its data"""
+    verify_auth(x_auth)
+    
+    data = load_data()
+    
+    if habit_id in data:
+        del data[habit_id]
+        save_data(data)
+        return {"status": "success", "message": f"Habit {habit_id} deleted"}
+    
+    raise HTTPException(status_code=404, detail="Habit not found")
+
 @app.get("/stats/{habit_id}")
 async def get_habit_stats(habit_id: str, x_auth: str = Header(...)) -> HabitStats:
     """Get detailed statistics for a habit"""
