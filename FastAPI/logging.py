@@ -10,3 +10,5 @@ def get_log_formatter()->logging.Formatter:
 
 def get_log_handler()->logging.Handler:
     handler=logging.StreamHandler(sys.stdout)
+
+log
