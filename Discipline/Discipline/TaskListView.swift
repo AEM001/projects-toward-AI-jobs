@@ -9,7 +9,6 @@ struct TaskListView: View {
     @State private var newTaskTitle: String = ""
     @State private var selectedDate: Date = Date()
     @State private var editingTask: DisciplineTask? = nil
-    @State private var showEditSheet: Bool = false
     @State private var selectedView: SidebarItem = .today
     @FocusState private var isInputFocused: Bool
     
@@ -59,26 +58,8 @@ struct TaskListView: View {
                 
                 Divider()
                 
-                // Refined Calendar - Enlarged
-                VStack(spacing: 0) {
-                    DatePicker(
-                        "",
-                        selection: $selectedDate,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.graphical)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-                    )
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                }
-                .frame(maxHeight: .infinity)
+                // Calendar
+                CalendarSidebarView(selectedDate: $selectedDate)
             }
             .background(Color(nsColor: .windowBackgroundColor))
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
@@ -98,14 +79,11 @@ struct TaskListView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
-        .sheet(isPresented: $showEditSheet) {
-            if let task = editingTask {
-                TaskEditSheet(task: task, onSave: {
-                    showEditSheet = false
-                    editingTask = nil
-                    WidgetCenter.shared.reloadAllTimelines()
-                })
-            }
+        .sheet(item: $editingTask) { task in
+            TaskEditSheet(task: task, onSave: {
+                editingTask = nil
+                WidgetCenter.shared.reloadAllTimelines()
+            })
         }
     }
     
@@ -187,7 +165,6 @@ struct TaskListView: View {
                             onDelete: { deleteTask(task) },
                             onEdit: {
                                 editingTask = task
-                                showEditSheet = true
                             }
                         )
                         .listRowSeparator(.hidden)
@@ -453,6 +430,185 @@ struct TaskEditSheet: View {
             editedTitle = task.title
             editedDate = task.createdAt
         }
+    }
+}
+
+// MARK: - Custom Calendar Sidebar
+struct CalendarSidebarView: View {
+    @Binding var selectedDate: Date
+    @State private var displayedMonth: Date = Date()
+    
+    private let calendar = Calendar.current
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            monthHeader
+            weekdayHeader
+            dayGrid
+            todayButton
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(nsColor: .controlBackgroundColor))
+                .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
+        )
+        .padding(.horizontal, 10)
+        .padding(.vertical, 10)
+        .onChange(of: selectedDate) { _, newDate in
+            if !calendar.isDate(newDate, equalTo: displayedMonth, toGranularity: .month) {
+                withAnimation { displayedMonth = newDate }
+            }
+        }
+    }
+    
+    // MARK: Month Header
+    private var monthHeader: some View {
+        HStack {
+            Button(action: { changeMonth(-1) }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color(nsColor: .secondaryLabelColor))
+            }
+            .buttonStyle(.plain)
+            
+            Spacer()
+            
+            Text(monthTitle)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color(nsColor: .labelColor))
+            
+            Spacer()
+            
+            Button(action: { changeMonth(1) }) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color(nsColor: .secondaryLabelColor))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 4)
+    }
+    
+    // MARK: Weekday Header
+    private var weekdayHeader: some View {
+        let days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+            ForEach(days, id: \.self) { day in
+                Text(day)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(Color(nsColor: .tertiaryLabelColor))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+            }
+        }
+    }
+    
+    // MARK: Day Grid
+    private var dayGrid: some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+        return LazyVGrid(columns: columns, spacing: 2) {
+            ForEach(Array(daysInMonth.enumerated()), id: \.offset) { _, date in
+                CalendarDayCell(
+                    date: date,
+                    selectedDate: $selectedDate,
+                    calendar: calendar
+                )
+            }
+        }
+    }
+    
+    // MARK: Today Button
+    @ViewBuilder
+    private var todayButton: some View {
+        let showButton = !calendar.isDate(displayedMonth, equalTo: Date(), toGranularity: .month) || !calendar.isDateInToday(selectedDate)
+        if showButton {
+            Button(action: {
+                withAnimation {
+                    selectedDate = Date()
+                    displayedMonth = Date()
+                }
+            }) {
+                Text("Today")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
+        }
+    }
+    
+    // MARK: Helpers
+    private var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: displayedMonth)
+    }
+    
+    private var daysInMonth: [Date?] {
+        let range = calendar.range(of: .day, in: .month, for: displayedMonth)!
+        let firstDay = calendar.date(from: calendar.dateComponents([.year, .month], from: displayedMonth))!
+        let firstWeekday = calendar.component(.weekday, from: firstDay)
+        
+        var days: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: firstDay) {
+                days.append(date)
+            }
+        }
+        while days.count % 7 != 0 {
+            days.append(nil)
+        }
+        return days
+    }
+    
+    private func changeMonth(_ offset: Int) {
+        withAnimation {
+            if let newMonth = calendar.date(byAdding: .month, value: offset, to: displayedMonth) {
+                displayedMonth = newMonth
+            }
+        }
+    }
+}
+
+// MARK: - Calendar Day Cell
+struct CalendarDayCell: View {
+    let date: Date?
+    @Binding var selectedDate: Date
+    let calendar: Calendar
+    
+    var body: some View {
+        if let date = date {
+            let dayNum = calendar.component(.day, from: date)
+            let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
+            let isToday = calendar.isDateInToday(date)
+            
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    selectedDate = date
+                }
+            }) {
+                dayLabel(dayNum: dayNum, isSelected: isSelected, isToday: isToday)
+            }
+            .buttonStyle(.plain)
+        } else {
+            Text("")
+                .frame(width: 26, height: 26)
+        }
+    }
+    
+    private func dayLabel(dayNum: Int, isSelected: Bool, isToday: Bool) -> some View {
+        let textColor: Color = isSelected ? .white : (isToday ? .accentColor : Color(nsColor: .labelColor))
+        let fontWeight: Font.Weight = isToday ? .bold : .regular
+        let bgColor: Color = isSelected ? .accentColor : .clear
+        let strokeColor: Color = (isToday && !isSelected) ? .accentColor : .clear
+        
+        return Text("\(dayNum)")
+            .font(.system(size: 12, weight: fontWeight))
+            .foregroundStyle(textColor)
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(bgColor))
+            .overlay(Circle().stroke(strokeColor, lineWidth: 1))
     }
 }
 
