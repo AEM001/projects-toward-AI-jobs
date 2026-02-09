@@ -8,7 +8,6 @@
 - ✅ Clean architecture (routes → services → CRUD → DB)
 - ✅ Transaction management implemented
 - ✅ Pydantic validation working
-- ⚠️ Duplicate `get_todo` function in crud.py (line 46) - needs cleanup
 
 ---
 

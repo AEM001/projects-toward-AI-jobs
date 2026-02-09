@@ -6,6 +6,8 @@ from db import TodoDB
 import crud
 
 from log_config import setup_logging, get_request_logger
+from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
+
 
 logger=setup_logging(level="INFO",log_to_file=True)
 request_logger=get_request_logger()
@@ -32,7 +34,7 @@ def get_todo_service(db: Session, id: int) -> TodoDB:
     todo = crud.get_todo(db, id)
     if todo is None:
         logger.warning(f"todo with id:{id} not found")
-        raise HTTPException(status_code=404, detail="Todo not found")
+        raise TodoNotFoundException(id)
     logger.info(f"Todo found: {todo.title}")
     return todo
 
@@ -43,7 +45,7 @@ def update_todo_service(db: Session, id: int, update: TodoUpdate) -> TodoDB:
     todo = crud.get_todo(db, id)
     if todo is None:
         logger.warning(f"todo with id:{id} not found")
-        raise HTTPException(status_code=404, detail="Todo not found")
+        raise TodoNotFoundException(id)
     result=crud.update_todo(db,todo,update)
     logger.info(f"todo updated: id{id},title='{result.title}',done={result.done}")
     return result
@@ -55,7 +57,7 @@ def delete_todo_service(db: Session, id: int) -> None:
     todo = crud.get_todo(db, id)
     if todo is None:
         logger.warning(f"todo with id:{id} not found")
-        raise HTTPException(status_code=404, detail="Todo not found")
+        raise TodoNotFoundException(id)
     crud.delete_todo(db, todo)
     logger.info(f"todo deleted successfully with id:{id}")
 

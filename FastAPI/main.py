@@ -6,6 +6,8 @@ from schemas import TodoCreate, Todo, TodoUpdate
 import services
 
 from log_config import setup_logging, get_request_logger
+from fastapi.responses import JSONResponse
+from exceptions import TodoNotFoundException,TodoValidationException,DatabaseException
 
 app = FastAPI(title="Simple Todo API")
 
@@ -18,6 +20,31 @@ async def log_requests(request,call_next):
     response=await call_next(request)
     request_logger.info(f"Response:{response.status_code}")
     return response
+
+@app.exception_handler(TodoNotFoundException)
+async def todo_not_found_handler(request, exc):
+    logger.warning(f"Todo with id {exc.todo_id} not found")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": f"Todo with id {exc.todo_id} not found"}
+    )
+
+@app.exception_handler(TodoValidationException)
+async def todo_validation_handler(request, exc):
+    logger.warning(f"Todo validation failed: {exc.detail}")
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.detail}
+    )
+
+@app.exception_handler(DatabaseException)
+async def database_exception_handler(request, exc):
+    logger.error(f"Database operation failed: {exc.detail}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Database operation failed"}
+    )
+
 
 
 # 读依赖
