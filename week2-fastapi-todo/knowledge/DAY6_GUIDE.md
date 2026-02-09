@@ -1,53 +1,53 @@
-# Day 6 实战指南：API 测试 + Postman 集合
+# Day 6 Practical Guide: API Testing + Postman Collection
 
-## 🎯 今日目标
-- 配置 pytest 测试环境
-- 编写完整的 API 端点测试
-- 创建测试数据库
-- 实现测试覆盖率分析
-- 创建 Postman 测试集合
+## 🎯 Today's Goals
+- Configure pytest testing environment
+- Write complete API endpoint tests
+- Create test database
+- Implement test coverage analysis
+- Create Postman test collection
 
-**预计时间**: 2-3 小时  
-**难度**: ⭐⭐⭐ (中级)
+**Estimated Time**: 2-3 hours  
+**Difficulty**: ⭐⭐⭐ (Intermediate)
 
 ---
 
-## 📚 开始前的准备（30 分钟）
+## 📚 Preparation Before Starting (30 minutes)
 
-### 1. 阅读学习资料
+### 1. Read Learning Materials
 - [FastAPI Testing](https://fastapi.tiangolo.com/tutorial/testing/)
-- [pytest 官方文档](https://docs.pytest.org/)
-- [httpx 文档](https://www.python-httpx.org/)
+- [pytest Official Documentation](https://docs.pytest.org/)
+- [httpx Documentation](https://www.python-httpx.org/)
 
-### 2. 理解测试概念
+### 2. Understand Testing Concepts
 
-#### 测试类型
-- **单元测试** - 测试单个函数/方法
-- **集成测试** - 测试多个组件的交互
-- **端到端测试** - 测试完整的用户流程
+#### Test Types
+- **Unit Tests** - Test individual functions/methods
+- **Integration Tests** - Test interactions between multiple components
+- **End-to-End Tests** - Test complete user flows
 
-#### 测试金字塔
+#### Testing Pyramid
 ```
        /\
-      /E2E\      ← 少量端到端测试
+      /E2E\      ← Few end-to-end tests
      /------\
-    /集成测试\    ← 适量集成测试
+    /Integration\  ← Moderate integration tests
    /----------\
-  /  单元测试  \  ← 大量单元测试
+  /  Unit Tests  \  ← Many unit tests
  /--------------\
 ```
 
 ---
 
-## 🛠️ 实战步骤
+## 🛠️ Practical Steps
 
-### Step 1: 配置测试环境（30 分钟）⭐ 核心
+### Step 1: Configure Test Environment (30 minutes) ⭐ Core
 
-创建 `tests/conftest.py`：
+Create `tests/conftest.py`:
 
 ```python
 """
-pytest 配置和 fixtures
+pytest configuration and fixtures
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -59,7 +59,7 @@ from src.main import app
 from src.database.base import Base
 from src.database.connection import get_db
 
-# 使用内存数据库进行测试
+# Use in-memory database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
@@ -74,27 +74,27 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="function")
 def db_session():
     """
-    创建测试数据库会话
-    每个测试函数都会创建新的数据库
+    Create test database session
+    Each test function creates a new database
     """
-    # 创建所有表
+    # Create all tables
     Base.metadata.create_all(bind=engine)
     
-    # 创建会话
+    # Create session
     session = TestingSessionLocal()
     
     try:
         yield session
     finally:
         session.close()
-        # 删除所有表
+        # Drop all tables
         Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")
 def client(db_session):
     """
-    创建测试客户端
+    Create test client
     """
     def override_get_db():
         try:
@@ -113,11 +113,11 @@ def client(db_session):
 @pytest.fixture
 def sample_todo_data():
     """
-    示例 Todo 数据
+    Sample Todo data
     """
     return {
-        "title": "测试任务",
-        "description": "这是一个测试任务",
+        "title": "Test Task",
+        "description": "This is a test task",
         "priority": "high"
     }
 
@@ -125,7 +125,7 @@ def sample_todo_data():
 @pytest.fixture
 def create_sample_todo(client, sample_todo_data):
     """
-    创建示例 Todo 的 fixture
+    Fixture to create sample Todo
     """
     def _create_todo(data=None):
         if data is None:
@@ -136,29 +136,29 @@ def create_sample_todo(client, sample_todo_data):
     return _create_todo
 ```
 
-**代码讲解**：
-1. **内存数据库** - 使用 SQLite 内存数据库，测试快速且隔离
-2. **scope="function"** - 每个测试函数都有独立的数据库
-3. **fixture** - pytest 的依赖注入机制
-4. **TestClient** - FastAPI 提供的测试客户端
+**Code Explanation**:
+1. **In-memory database** - Use SQLite in-memory database for fast and isolated testing
+2. **scope="function"** - Each test function has an independent database
+3. **fixture** - pytest's dependency injection mechanism
+4. **TestClient** - Test client provided by FastAPI
 
-### Step 2: 编写 API 端点测试（60 分钟）⭐ 核心
+### Step 2: Write API Endpoint Tests (60 minutes) ⭐ Core
 
-创建 `tests/test_todos_api.py`：
+Create `tests/test_todos_api.py`:
 
 ```python
 """
-Todo API 端点测试
+Todo API endpoint tests
 """
 import pytest
 from fastapi import status
 
 
 class TestCreateTodo:
-    """测试创建 Todo"""
+    """Test creating Todo"""
     
     def test_create_todo_success(self, client, sample_todo_data):
-        """测试成功创建 Todo"""
+        """Test successful Todo creation"""
         response = client.post("/todos", json=sample_todo_data)
         
         assert response.status_code == status.HTTP_201_CREATED
@@ -173,16 +173,16 @@ class TestCreateTodo:
         assert "updated_at" in data
     
     def test_create_todo_without_title(self, client):
-        """测试创建 Todo 时缺少标题"""
+        """Test creating Todo without title"""
         response = client.post("/todos", json={
-            "description": "测试",
+            "description": "Test",
             "priority": "high"
         })
         
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
     def test_create_todo_with_empty_title(self, client):
-        """测试创建 Todo 时标题为空"""
+        """Test creating Todo with empty title"""
         response = client.post("/todos", json={
             "title": "",
             "priority": "high"
@@ -191,18 +191,18 @@ class TestCreateTodo:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
     def test_create_todo_with_invalid_priority(self, client):
-        """测试创建 Todo 时优先级无效"""
+        """Test creating Todo with invalid priority"""
         response = client.post("/todos", json={
-            "title": "测试",
-            "priority": "urgent"  # 无效的优先级
+            "title": "Test",
+            "priority": "urgent"  # Invalid priority
         })
         
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
     def test_create_todo_with_long_title(self, client):
-        """测试创建 Todo 时标题过长"""
+        """Test creating Todo with too long title"""
         response = client.post("/todos", json={
-            "title": "a" * 201,  # 超过 200 字符
+            "title": "a" * 201,  # Over 200 characters
             "priority": "high"
         })
         
@@ -210,10 +210,10 @@ class TestCreateTodo:
 
 
 class TestGetTodos:
-    """测试获取 Todo 列表"""
+    """Test getting Todo list"""
     
     def test_get_empty_todos(self, client):
-        """测试获取空的 Todo 列表"""
+        """Test getting empty Todo list"""
         response = client.get("/todos")
         
         assert response.status_code == status.HTTP_200_OK
@@ -223,8 +223,8 @@ class TestGetTodos:
         assert data["total"] == 0
     
     def test_get_todos_with_data(self, client, create_sample_todo):
-        """测试获取有数据的 Todo 列表"""
-        # 创建 3 个 Todo
+        """Test getting Todo list with data"""
+        # Create 3 Todos
         create_sample_todo()
         create_sample_todo()
         create_sample_todo()
@@ -238,15 +238,15 @@ class TestGetTodos:
         assert data["total"] == 3
     
     def test_get_todos_with_status_filter(self, client, create_sample_todo):
-        """测试按状态筛选 Todo"""
-        # 创建并更新一个 Todo
+        """Test filtering Todos by status"""
+        # Create and update a Todo
         todo = create_sample_todo()
         client.put(f"/todos/{todo['id']}", json={"status": "done"})
         
-        # 创建另一个 Todo
+        # Create another Todo
         create_sample_todo()
         
-        # 筛选已完成的 Todo
+        # Filter completed Todos
         response = client.get("/todos?status=done")
         
         assert response.status_code == status.HTTP_200_OK
@@ -256,12 +256,12 @@ class TestGetTodos:
         assert data["todos"][0]["status"] == "done"
     
     def test_get_todos_with_pagination(self, client, create_sample_todo):
-        """测试分页"""
-        # 创建 15 个 Todo
+        """Test pagination"""
+        # Create 15 Todos
         for _ in range(15):
             create_sample_todo()
         
-        # 获取第 1 页（每页 10 条）
+        # Get page 1 (10 items per page)
         response = client.get("/todos?page=1&page_size=10")
         
         assert response.status_code == status.HTTP_200_OK
@@ -273,18 +273,18 @@ class TestGetTodos:
         assert data["total_pages"] == 2
     
     def test_get_todos_with_search(self, client, create_sample_todo):
-        """测试搜索功能"""
-        # 创建特定标题的 Todo
+        """Test search functionality"""
+        # Create Todos with specific titles
         client.post("/todos", json={
-            "title": "学习 Python",
+            "title": "Learn Python",
             "priority": "high"
         })
         client.post("/todos", json={
-            "title": "学习 FastAPI",
+            "title": "Learn FastAPI",
             "priority": "high"
         })
         
-        # 搜索包含 "Python" 的 Todo
+        # Search for Todos containing "Python"
         response = client.get("/todos?search=Python")
         
         assert response.status_code == status.HTTP_200_OK
@@ -295,10 +295,10 @@ class TestGetTodos:
 
 
 class TestGetTodo:
-    """测试获取单个 Todo"""
+    """Test getting single Todo"""
     
     def test_get_existing_todo(self, client, create_sample_todo):
-        """测试获取存在的 Todo"""
+        """Test getting existing Todo"""
         todo = create_sample_todo()
         
         response = client.get(f"/todos/{todo['id']}")
@@ -310,30 +310,30 @@ class TestGetTodo:
         assert data["title"] == todo["title"]
     
     def test_get_nonexistent_todo(self, client):
-        """测试获取不存在的 Todo"""
+        """Test getting non-existent Todo"""
         response = client.get("/todos/999")
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestUpdateTodo:
-    """测试更新 Todo"""
+    """Test updating Todo"""
     
     def test_update_todo_title(self, client, create_sample_todo):
-        """测试更新 Todo 标题"""
+        """Test updating Todo title"""
         todo = create_sample_todo()
         
         response = client.put(f"/todos/{todo['id']}", json={
-            "title": "新标题"
+            "title": "New Title"
         })
         
         assert response.status_code == status.HTTP_200_OK
         
         data = response.json()
-        assert data["title"] == "新标题"
+        assert data["title"] == "New Title"
     
     def test_update_todo_status(self, client, create_sample_todo):
-        """测试更新 Todo 状态"""
+        """Test updating Todo status"""
         todo = create_sample_todo()
         
         response = client.put(f"/todos/{todo['id']}", json={
@@ -346,42 +346,42 @@ class TestUpdateTodo:
         assert data["status"] == "done"
     
     def test_update_nonexistent_todo(self, client):
-        """测试更新不存在的 Todo"""
+        """Test updating non-existent Todo"""
         response = client.put("/todos/999", json={
-            "title": "新标题"
+            "title": "New Title"
         })
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestDeleteTodo:
-    """测试删除 Todo"""
+    """Test deleting Todo"""
     
     def test_delete_existing_todo(self, client, create_sample_todo):
-        """测试删除存在的 Todo"""
+        """Test deleting existing Todo"""
         todo = create_sample_todo()
         
         response = client.delete(f"/todos/{todo['id']}")
         
         assert response.status_code == status.HTTP_204_NO_CONTENT
         
-        # 验证已删除
+        # Verify deletion
         get_response = client.get(f"/todos/{todo['id']}")
         assert get_response.status_code == status.HTTP_404_NOT_FOUND
     
     def test_delete_nonexistent_todo(self, client):
-        """测试删除不存在的 Todo"""
+        """Test deleting non-existent Todo"""
         response = client.delete("/todos/999")
         
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestTodoStats:
-    """测试 Todo 统计"""
+    """Test Todo statistics"""
     
     def test_get_stats(self, client, create_sample_todo):
-        """测试获取统计信息"""
-        # 创建不同状态和优先级的 Todo
+        """Test getting statistics"""
+        # Create Todos with different statuses and priorities
         todo1 = create_sample_todo()
         todo2 = create_sample_todo()
         
@@ -397,37 +397,37 @@ class TestTodoStats:
         assert data["pending"] == 1
 ```
 
-### Step 3: 运行测试（20 分钟）
+### Step 3: Run Tests (20 minutes)
 
 ```bash
-# 1. 运行所有测试
+# 1. Run all tests
 pytest tests/ -v
 
-# 2. 运行特定测试文件
+# 2. Run specific test file
 pytest tests/test_todos_api.py -v
 
-# 3. 运行特定测试类
+# 3. Run specific test class
 pytest tests/test_todos_api.py::TestCreateTodo -v
 
-# 4. 运行特定测试方法
+# 4. Run specific test method
 pytest tests/test_todos_api.py::TestCreateTodo::test_create_todo_success -v
 
-# 5. 查看测试覆盖率
+# 5. View test coverage
 pytest tests/ --cov=src --cov-report=html
 
-# 6. 查看详细的覆盖率报告
+# 6. View detailed coverage report
 open htmlcov/index.html  # macOS
 ```
 
-### Step 4: 创建 Postman 测试集合（30 分钟）
+### Step 4: Create Postman Test Collection (30 minutes)
 
-创建 `docs/postman_collection.json`：
+Create `docs/postman_collection.json`:
 
 ```json
 {
   "info": {
     "name": "FastAPI TODO API",
-    "description": "完整的 TODO API 测试集合",
+    "description": "Complete TODO API test collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -485,7 +485,7 @@ open htmlcov/index.html  # macOS
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"学习 FastAPI\",\n  \"description\": \"完成 FastAPI 教程\",\n  \"priority\": \"high\"\n}"
+          "raw": "{\n  \"title\": \"Learn FastAPI\",\n  \"description\": \"Complete FastAPI tutorial\",\n  \"priority\": \"high\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/todos",
@@ -569,49 +569,49 @@ open htmlcov/index.html  # macOS
 
 ---
 
-## ✅ 今日成果检查
+## ✅ Today's Results Checklist
 
-### 文件清单
-- [x] `tests/conftest.py` - pytest 配置
-- [x] `tests/test_todos_api.py` - API 测试
-- [x] `docs/postman_collection.json` - Postman 集合
+### File List
+- [x] `tests/conftest.py` - pytest configuration
+- [x] `tests/test_todos_api.py` - API tests
+- [x] `docs/postman_collection.json` - Postman collection
 
-### 功能验证
+### Function Verification
 ```bash
-# 1. 运行所有测试
+# 1. Run all tests
 pytest tests/ -v
 
-# 2. 查看覆盖率
+# 2. View coverage
 pytest tests/ --cov=src --cov-report=term-missing
 
-# 3. 导入 Postman 集合
-# 打开 Postman → Import → 选择 postman_collection.json
+# 3. Import Postman collection
+# Open Postman → Import → Select postman_collection.json
 ```
 
-### 学习收获
-- [x] 掌握 pytest 测试框架
-- [x] 学会编写 API 测试
-- [x] 理解测试覆盖率
-- [x] 学会使用 Postman
-- [x] 掌握测试最佳实践
+### Learning Achievements
+- [x] Mastered pytest testing framework
+- [x] Learned to write API tests
+- [x] Understood test coverage
+- [x] Learned to use Postman
+- [x] Mastered testing best practices
 
 ---
 
-## 📝 今日总结
+## 📝 Today's Summary
 
-在 Day 6，你完成了：
-1. ✅ 配置了测试环境
-2. ✅ 编写了完整的 API 测试
-3. ✅ 实现了测试覆盖率分析
-4. ✅ 创建了 Postman 测试集合
-5. ✅ 掌握了测试最佳实践
+On Day 6, you completed:
+1. ✅ Configured test environment
+2. ✅ Wrote complete API tests
+3. ✅ Implemented test coverage analysis
+4. ✅ Created Postman test collection
+5. ✅ Mastered testing best practices
 
-**明天预告（Day 7）**：
-- 完善项目文档
-- 优化代码结构
-- 准备部署
-- 项目总结
+**Tomorrow's Preview (Day 7)**:
+- Improve project documentation
+- Optimize code structure
+- Prepare for deployment
+- Project summary
 
 ---
 
-**恭喜完成 Day 6！测试覆盖完成！** 🎉
+**Congratulations on completing Day 6! Testing coverage complete!** 🎉

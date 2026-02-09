@@ -1,35 +1,35 @@
-# Day 7 实战指南：文档完善 + 部署准备 + 项目总结
+# Day 7 Practical Guide: Documentation Improvement + Deployment Preparation + Project Summary
 
-## 🎯 今日目标
-- 完善 API 文档
-- 优化 Swagger 文档显示
-- 编写部署文档
-- 代码优化和重构
-- 项目总结和回顾
+## 🎯 Today's Goals
+- Improve API documentation
+- Optimize Swagger documentation display
+- Write deployment documentation
+- Code optimization and refactoring
+- Project summary and review
 
-**预计时间**: 2-3 小时  
-**难度**: ⭐⭐ (入门)
+**Estimated Time**: 2-3 hours  
+**Difficulty**: ⭐⭐ (Beginner)
 
 ---
 
-## 📚 开始前的准备（20 分钟）
+## 📚 Preparations Before Starting (20 minutes)
 
-### 1. 阅读学习资料
+### 1. Read Learning Materials
 - [FastAPI Metadata and Docs](https://fastapi.tiangolo.com/tutorial/metadata/)
 - [FastAPI Deployment](https://fastapi.tiangolo.com/deployment/)
-- [Docker 基础](https://docs.docker.com/get-started/)
+- [Docker Basics](https://docs.docker.com/get-started/)
 
 ---
 
-## 🛠️ 实战步骤
+## 🛠️ Practical Steps
 
-### Step 1: 优化 Swagger 文档（40 分钟）⭐ 核心
+### Step 1: Optimize Swagger Documentation (40 minutes) ⭐ Core
 
-更新 `src/main.py`，增强 API 文档：
+Update `src/main.py` to enhance API documentation:
 
 ```python
 """
-FastAPI TODO API - 完整版
+FastAPI TODO API - Complete Version
 """
 from fastapi import FastAPI, HTTPException, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,50 +46,50 @@ from src.utils.logger import logger
 from src.utils.middleware import RequestLoggingMiddleware
 from src.utils.exceptions import TodoNotFoundException, DatabaseException
 
-# API 元数据
+# API Metadata
 tags_metadata = [
     {
         "name": "Root",
-        "description": "根路径和健康检查端点",
+        "description": "Root path and health check endpoints",
     },
     {
         "name": "Todos",
-        "description": "TODO 任务管理操作。包括创建、读取、更新、删除任务。",
+        "description": "TODO task management operations. Including create, read, update, delete tasks.",
     },
     {
         "name": "Health",
-        "description": "应用健康检查端点",
+        "description": "Application health check endpoints",
     },
 ]
 
 app = FastAPI(
     title="FastAPI TODO API",
     description="""
-    ## 功能特性
+    ## Features
     
-    这是一个完整的 RESTful TODO 管理 API，提供以下功能：
+    This is a complete RESTful TODO management API that provides the following features:
     
-    * **CRUD 操作** - 创建、读取、更新、删除任务
-    * **数据验证** - 自动验证请求数据
-    * **数据持久化** - SQLite 数据库存储
-    * **搜索和筛选** - 按状态、优先级搜索任务
-    * **分页支持** - 大数据量分页查询
-    * **统计功能** - 任务统计和报表
-    * **批量操作** - 批量删除任务
+    * **CRUD Operations** - Create, read, update, delete tasks
+    * **Data Validation** - Automatic request data validation
+    * **Data Persistence** - SQLite database storage
+    * **Search and Filter** - Search tasks by status, priority
+    * **Pagination Support** - Paginated queries for large data
+    * **Statistics** - Task statistics and reports
+    * **Batch Operations** - Batch delete tasks
     
-    ## 技术栈
+    ## Tech Stack
     
-    * **FastAPI** - 现代高性能 Web 框架
+    * **FastAPI** - Modern high-performance web framework
     * **SQLAlchemy** - Python ORM
-    * **Pydantic** - 数据验证
-    * **SQLite** - 轻量级数据库
+    * **Pydantic** - Data validation
+    * **SQLite** - Lightweight database
     
-    ## 快速开始
+    ## Quick Start
     
-    1. 创建任务：POST /todos
-    2. 查看任务：GET /todos
-    3. 更新任务：PUT /todos/{id}
-    4. 删除任务：DELETE /todos/{id}
+    1. Create task: POST /todos
+    2. View tasks: GET /todos
+    3. Update task: PUT /todos/{id}
+    4. Delete task: DELETE /todos/{id}
     """,
     version="1.0.0",
     contact={
@@ -103,55 +103,55 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
-# 添加中间件...
-# （保持之前的中间件配置）
+# Add middleware...
+# (Keep previous middleware configuration)
 
-# 路由端点...
-# （保持之前的路由，添加更详细的文档字符串）
+# Route endpoints...
+# (Keep previous routes, add more detailed docstrings)
 ```
 
-### Step 2: 创建 API 设计文档（30 分钟）
+### Step 2: Create API Design Documentation (30 minutes)
 
-创建 `docs/api_design.md`：
+Create `docs/api_design.md`:
 
 ```markdown
-# FastAPI TODO API 设计文档
+# FastAPI TODO API Design Documentation
 
-## 概述
+## Overview
 
-FastAPI TODO API 是一个 RESTful 风格的任务管理 API，提供完整的 CRUD 操作。
+FastAPI TODO API is a RESTful-style task management API that provides complete CRUD operations.
 
-## 基础信息
+## Basic Information
 
 - **Base URL**: `http://localhost:8000`
 - **API Version**: 1.0.0
 - **Content-Type**: `application/json`
 
-## 认证
+## Authentication
 
-当前版本不需要认证。未来版本将支持 JWT Token 认证。
+Current version does not require authentication. Future versions will support JWT Token authentication.
 
-## 端点列表
+## Endpoint List
 
-### 1. 创建任务
+### 1. Create Task
 
-**端点**: `POST /todos`
+**Endpoint**: `POST /todos`
 
-**请求体**:
+**Request Body**:
 ```json
 {
-  "title": "任务标题",
-  "description": "任务描述（可选）",
+  "title": "Task Title",
+  "description": "Task Description (optional)",
   "priority": "high"
 }
 ```
 
-**响应**: `201 Created`
+**Response**: `201 Created`
 ```json
 {
   "id": 1,
-  "title": "任务标题",
-  "description": "任务描述",
+  "title": "Task Title",
+  "description": "Task Description",
   "status": "pending",
   "priority": "high",
   "created_at": "2024-12-20T10:00:00",
@@ -159,20 +159,20 @@ FastAPI TODO API 是一个 RESTful 风格的任务管理 API，提供完整的 C
 }
 ```
 
-### 2. 获取任务列表
+### 2. Get Task List
 
-**端点**: `GET /todos`
+**Endpoint**: `GET /todos`
 
-**查询参数**:
-- `status` (可选): 按状态筛选 (pending, in_progress, done)
-- `priority` (可选): 按优先级筛选 (low, medium, high)
-- `search` (可选): 搜索关键词
-- `sort_by` (可选): 排序字段
-- `sort_order` (可选): 排序顺序 (asc, desc)
-- `page` (可选): 页码，默认 1
-- `page_size` (可选): 每页数量，默认 10
+**Query Parameters**:
+- `status` (optional): Filter by status (pending, in_progress, done)
+- `priority` (optional): Filter by priority (low, medium, high)
+- `search` (optional): Search keyword
+- `sort_by` (optional): Sort field
+- `sort_order` (optional): Sort order (asc, desc)
+- `page` (optional): Page number, default 1
+- `page_size` (optional): Items per page, default 10
 
-**响应**: `200 OK`
+**Response**: `200 OK`
 ```json
 {
   "todos": [...],
@@ -183,39 +183,39 @@ FastAPI TODO API 是一个 RESTful 风格的任务管理 API，提供完整的 C
 }
 ```
 
-### 3. 获取单个任务
+### 3. Get Single Task
 
-**端点**: `GET /todos/{id}`
+**Endpoint**: `GET /todos/{id}`
 
-**响应**: `200 OK` 或 `404 Not Found`
+**Response**: `200 OK` or `404 Not Found`
 
-### 4. 更新任务
+### 4. Update Task
 
-**端点**: `PUT /todos/{id}`
+**Endpoint**: `PUT /todos/{id}`
 
-**请求体** (所有字段可选):
+**Request Body** (all fields optional):
 ```json
 {
-  "title": "新标题",
-  "description": "新描述",
+  "title": "New Title",
+  "description": "New Description",
   "status": "done",
   "priority": "low"
 }
 ```
 
-**响应**: `200 OK` 或 `404 Not Found`
+**Response**: `200 OK` or `404 Not Found`
 
-### 5. 删除任务
+### 5. Delete Task
 
-**端点**: `DELETE /todos/{id}`
+**Endpoint**: `DELETE /todos/{id}`
 
-**响应**: `204 No Content` 或 `404 Not Found`
+**Response**: `204 No Content` or `404 Not Found`
 
-### 6. 获取统计信息
+### 6. Get Statistics
 
-**端点**: `GET /todos/stats`
+**Endpoint**: `GET /todos/stats`
 
-**响应**: `200 OK`
+**Response**: `200 OK`
 ```json
 {
   "total": 100,
@@ -228,46 +228,46 @@ FastAPI TODO API 是一个 RESTful 风格的任务管理 API，提供完整的 C
 }
 ```
 
-## 错误处理
+## Error Handling
 
-### 错误响应格式
+### Error Response Format
 
 ```json
 {
-  "detail": "错误详情",
-  "message": "用户友好的错误消息"
+  "detail": "Error details",
+  "message": "User-friendly error message"
 }
 ```
 
-### 常见错误码
+### Common Error Codes
 
-- `400 Bad Request` - 请求格式错误
-- `404 Not Found` - 资源不存在
-- `422 Unprocessable Entity` - 数据验证失败
-- `500 Internal Server Error` - 服务器内部错误
+- `400 Bad Request` - Request format error
+- `404 Not Found` - Resource does not exist
+- `422 Unprocessable Entity` - Data validation failed
+- `500 Internal Server Error` - Server internal error
 
-## 数据模型
+## Data Models
 
 ### Todo
 
-| 字段 | 类型 | 必填 | 描述 |
-|------|------|------|------|
-| id | integer | 是 | 任务 ID（自动生成） |
-| title | string | 是 | 任务标题（1-200 字符） |
-| description | string | 否 | 任务描述（最多 1000 字符） |
-| status | enum | 是 | 任务状态（pending, in_progress, done） |
-| priority | enum | 是 | 优先级（low, medium, high） |
-| created_at | datetime | 是 | 创建时间（自动生成） |
-| updated_at | datetime | 是 | 更新时间（自动更新） |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | integer | Yes | Task ID (auto-generated) |
+| title | string | Yes | Task title (1-200 characters) |
+| description | string | No | Task description (max 1000 characters) |
+| status | enum | Yes | Task status (pending, in_progress, done) |
+| priority | enum | Yes | Priority (low, medium, high) |
+| created_at | datetime | Yes | Creation time (auto-generated) |
+| updated_at | datetime | Yes | Update time (auto-updated) |
 
-## 最佳实践
+## Best Practices
 
-1. **分页**: 获取大量数据时使用分页
-2. **筛选**: 使用查询参数筛选数据
-3. **搜索**: 使用 search 参数进行全文搜索
-4. **错误处理**: 检查响应状态码和错误信息
+1. **Pagination**: Use pagination when retrieving large amounts of data
+2. **Filtering**: Use query parameters to filter data
+3. **Search**: Use search parameter for full-text search
+4. **Error Handling**: Check response status codes and error messages
 
-## 示例代码
+## Example Code
 
 ### Python (requests)
 
@@ -276,17 +276,17 @@ import requests
 
 BASE_URL = "http://localhost:8000"
 
-# 创建任务
+# Create task
 response = requests.post(
     f"{BASE_URL}/todos",
     json={
-        "title": "学习 FastAPI",
+        "title": "Learn FastAPI",
         "priority": "high"
     }
 )
 print(response.json())
 
-# 获取任务列表
+# Get task list
 response = requests.get(f"{BASE_URL}/todos")
 print(response.json())
 ```
@@ -296,14 +296,14 @@ print(response.json())
 ```javascript
 const BASE_URL = "http://localhost:8000";
 
-// 创建任务
+// Create task
 fetch(`${BASE_URL}/todos`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    title: '学习 FastAPI',
+    title: 'Learn FastAPI',
     priority: 'high'
   })
 })
@@ -311,66 +311,66 @@ fetch(`${BASE_URL}/todos`, {
 .then(data => console.log(data));
 ```
 
-## 版本历史
+## Version History
 
 ### v1.0.0 (2024-12-20)
-- 初始版本
-- 基础 CRUD 操作
-- 搜索和筛选功能
-- 分页支持
-- 统计功能
+- Initial version
+- Basic CRUD operations
+- Search and filter functionality
+- Pagination support
+- Statistics functionality
 ```
 
-### Step 3: 创建部署文档（30 分钟）
+### Step 3: Create Deployment Documentation (30 minutes)
 
-创建 `docs/deployment.md`：
+Create `docs/deployment.md`:
 
 ```markdown
-# 部署指南
+# Deployment Guide
 
-## 本地开发环境
+## Local Development Environment
 
-### 1. 环境准备
+### 1. Environment Setup
 
 ```bash
-# 克隆项目
+# Clone project
 git clone <repository-url>
 cd week2-fastapi-todo
 
-# 创建虚拟环境
+# Create virtual environment
 python3 -m venv venv
 
-# 激活虚拟环境
+# Activate virtual environment
 source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate  # Windows
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
-# 复制环境变量示例文件
+# Copy environment variable example file
 cp .env.example .env
 
-# 编辑 .env 文件
-# 根据需要修改配置
+# Edit .env file
+# Modify configuration as needed
 ```
 
-### 3. 启动应用
+### 3. Start Application
 
 ```bash
-# 开发模式（自动重载）
+# Development mode (auto-reload)
 uvicorn src.main:app --reload
 
-# 生产模式
+# Production mode
 uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Docker 部署
+## Docker Deployment
 
-### 1. 创建 Dockerfile
+### 1. Create Dockerfile
 
 ```dockerfile
 FROM python:3.11-slim
@@ -387,32 +387,32 @@ EXPOSE 8000
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-### 2. 构建和运行
+### 2. Build and Run
 
 ```bash
-# 构建镜像
+# Build image
 docker build -t fastapi-todo .
 
-# 运行容器
+# Run container
 docker run -d -p 8000:8000 fastapi-todo
 ```
 
-## 生产环境部署
+## Production Environment Deployment
 
-### 使用 Gunicorn + Uvicorn
+### Using Gunicorn + Uvicorn
 
 ```bash
-# 安装 Gunicorn
+# Install Gunicorn
 pip install gunicorn
 
-# 启动应用
+# Start application
 gunicorn src.main:app \
   --workers 4 \
   --worker-class uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8000
 ```
 
-### 使用 Nginx 反向代理
+### Using Nginx Reverse Proxy
 
 ```nginx
 server {
@@ -427,53 +427,53 @@ server {
 }
 ```
 
-## 云平台部署
+## Cloud Platform Deployment
 
 ### Heroku
 
 ```bash
-# 创建 Procfile
+# Create Procfile
 echo "web: uvicorn src.main:app --host 0.0.0.0 --port \$PORT" > Procfile
 
-# 部署
+# Deploy
 heroku create
 git push heroku main
 ```
 
 ### Railway
 
-1. 连接 GitHub 仓库
-2. 选择项目
-3. 自动部署
+1. Connect GitHub repository
+2. Select project
+3. Auto-deploy
 
-## 性能优化
+## Performance Optimization
 
-1. **使用连接池**: 配置数据库连接池
-2. **启用缓存**: 使用 Redis 缓存
-3. **负载均衡**: 使用多个 worker
-4. **CDN**: 静态资源使用 CDN
+1. **Connection Pool**: Configure database connection pool
+2. **Enable Caching**: Use Redis cache
+3. **Load Balancing**: Use multiple workers
+4. **CDN**: Use CDN for static resources
 
-## 监控和日志
+## Monitoring and Logging
 
-1. **日志收集**: 使用 ELK Stack
-2. **性能监控**: 使用 Prometheus + Grafana
-3. **错误追踪**: 使用 Sentry
+1. **Log Collection**: Use ELK Stack
+2. **Performance Monitoring**: Use Prometheus + Grafana
+3. **Error Tracking**: Use Sentry
 
-## 安全建议
+## Security Recommendations
 
-1. **HTTPS**: 使用 SSL/TLS 证书
-2. **CORS**: 限制允许的域名
-3. **速率限制**: 防止 API 滥用
-4. **输入验证**: 严格验证用户输入
+1. **HTTPS**: Use SSL/TLS certificates
+2. **CORS**: Restrict allowed domains
+3. **Rate Limiting**: Prevent API abuse
+4. **Input Validation**: Strictly validate user input
 ```
 
-### Step 4: 代码优化和重构（30 分钟）
+### Step 4: Code Optimization and Refactoring (30 minutes)
 
-创建 `src/utils/__init__.py`：
+Create `src/utils/__init__.py`:
 
 ```python
 """
-工具模块导出
+Utility module exports
 """
 from src.utils.logger import logger
 from src.utils.exceptions import (
@@ -490,212 +490,212 @@ __all__ = [
 ]
 ```
 
-更新 `requirements.txt`，添加生产环境依赖：
+Update `requirements.txt`, add production environment dependencies:
 
 ```txt
-# FastAPI 框架
+# FastAPI framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# 数据库
+# Database
 sqlalchemy==2.0.23
 aiosqlite==0.19.0
 
-# 数据验证
+# Data validation
 pydantic==2.5.0
 pydantic-settings==2.1.0
 
-# 环境变量
+# Environment variables
 python-dotenv==1.0.0
 
-# 测试框架
+# Testing framework
 pytest==7.4.3
 pytest-cov==4.1.0
 httpx==0.25.2
 
-# 开发工具
+# Development tools
 black==23.12.0
 flake8==6.1.0
 
-# 生产环境
+# Production environment
 gunicorn==21.2.0
 ```
 
-### Step 5: 项目总结和清单（20 分钟）
+### Step 5: Project Summary and Checklist (20 minutes)
 
-创建 `CHECKLIST.md`：
+Create `CHECKLIST.md`:
 
 ```markdown
-# Week 2 项目完成清单
+# Week 2 Project Completion Checklist
 
-## 功能实现
+## Feature Implementation
 
-- [x] 创建任务（POST /todos）
-- [x] 获取任务列表（GET /todos）
-- [x] 获取单个任务（GET /todos/{id}）
-- [x] 更新任务（PUT /todos/{id}）
-- [x] 删除任务（DELETE /todos/{id}）
-- [x] 任务搜索功能
-- [x] 任务筛选（状态、优先级）
-- [x] 分页支持
-- [x] 排序功能
-- [x] 统计功能
-- [x] 批量删除
+- [x] Create task (POST /todos)
+- [x] Get task list (GET /todos)
+- [x] Get single task (GET /todos/{id})
+- [x] Update task (PUT /todos/{id})
+- [x] Delete task (DELETE /todos/{id})
+- [x] Task search functionality
+- [x] Task filtering (status, priority)
+- [x] Pagination support
+- [x] Sorting functionality
+- [x] Statistics functionality
+- [x] Batch delete
 
-## 技术实现
+## Technical Implementation
 
-- [x] FastAPI 框架集成
-- [x] Pydantic 数据验证
+- [x] FastAPI framework integration
+- [x] Pydantic data validation
 - [x] SQLAlchemy ORM
-- [x] SQLite 数据库
-- [x] 依赖注入
-- [x] 异常处理
-- [x] 日志系统
-- [x] 中间件
-- [x] CORS 配置
+- [x] SQLite database
+- [x] Dependency injection
+- [x] Exception handling
+- [x] Logging system
+- [x] Middleware
+- [x] CORS configuration
 
-## 测试
+## Testing
 
-- [x] API 端点测试
-- [x] 数据验证测试
-- [x] 错误处理测试
-- [x] 测试覆盖率 > 80%
-- [x] Postman 测试集合
+- [x] API endpoint testing
+- [x] Data validation testing
+- [x] Error handling testing
+- [x] Test coverage > 80%
+- [x] Postman test collection
 
-## 文档
+## Documentation
 
 - [x] README.md
-- [x] API 设计文档
-- [x] 部署文档
-- [x] 每日学习指南
-- [x] Swagger 自动文档
-- [x] 代码注释
+- [x] API design documentation
+- [x] Deployment documentation
+- [x] Daily learning guide
+- [x] Swagger auto documentation
+- [x] Code comments
 
-## 代码质量
+## Code Quality
 
-- [x] 遵循 PEP 8 规范
-- [x] 类型注解
-- [x] 错误处理
-- [x] 日志记录
-- [x] 代码模块化
+- [x] Follow PEP 8 standards
+- [x] Type annotations
+- [x] Error handling
+- [x] Logging
+- [x] Code modularity
 
-## 交付物
+## Deliverables
 
-- [x] 可运行的 API 服务
-- [x] 完整的测试套件
-- [x] Postman 测试集合
-- [x] 完整的文档
-- [x] Git 仓库
+- [x] Runnable API service
+- [x] Complete test suite
+- [x] Postman test collection
+- [x] Complete documentation
+- [x] Git repository
 
-## 学习成果
+## Learning Outcomes
 
-- [x] 掌握 FastAPI 框架
-- [x] 理解 RESTful API 设计
-- [x] 学会使用 Pydantic
-- [x] 掌握 SQLAlchemy ORM
-- [x] 学会编写 API 测试
-- [x] 理解依赖注入
-- [x] 掌握异常处理
+- [x] Master FastAPI framework
+- [x] Understand RESTful API design
+- [x] Learn to use Pydantic
+- [x] Master SQLAlchemy ORM
+- [x] Learn to write API tests
+- [x] Understand dependency injection
+- [x] Master exception handling
 ```
 
 ---
 
-## ✅ 今日成果检查
+## ✅ Today's Result Check
 
-### 最终验证
+### Final Verification
 
 ```bash
-# 1. 运行所有测试
+# 1. Run all tests
 pytest tests/ -v --cov=src
 
-# 2. 启动应用
+# 2. Start application
 uvicorn src.main:app --reload
 
-# 3. 访问文档
+# 3. Access documentation
 open http://localhost:8000/docs
 
-# 4. 检查代码风格
+# 4. Check code style
 flake8 src/
 
-# 5. 格式化代码
+# 5. Format code
 black src/ tests/
 ```
 
-### 学习收获
-- [x] 完善了项目文档
-- [x] 优化了 API 文档
-- [x] 学会了部署方法
-- [x] 掌握了项目管理
-- [x] 完成了完整项目
+### Learning Achievements
+- [x] Improved project documentation
+- [x] Optimized API documentation
+- [x] Learned deployment methods
+- [x] Mastered project management
+- [x] Completed complete project
 
 ---
 
-## 📝 Week 2 总结
+## 📝 Week 2 Summary
 
-### 你学到了什么？
+### What Did You Learn?
 
-1. **FastAPI 框架**
-   - 路由和端点
-   - 请求验证
-   - 响应模型
-   - 依赖注入
-   - 中间件
+1. **FastAPI Framework**
+   - Routing and endpoints
+   - Request validation
+   - Response models
+   - Dependency injection
+   - Middleware
 
-2. **数据库操作**
+2. **Database Operations**
    - SQLAlchemy ORM
-   - 数据库连接
-   - CRUD 操作
-   - 查询优化
+   - Database connections
+   - CRUD operations
+   - Query optimization
 
-3. **API 设计**
-   - RESTful 原则
-   - HTTP 方法
-   - 状态码
-   - 错误处理
+3. **API Design**
+   - RESTful principles
+   - HTTP methods
+   - Status codes
+   - Error handling
 
-4. **测试**
-   - pytest 框架
-   - API 测试
-   - 测试覆盖率
+4. **Testing**
+   - pytest framework
+   - API testing
+   - Test coverage
    - Postman
 
-5. **工程化**
-   - 项目结构
-   - 日志系统
-   - 异常处理
-   - 文档编写
+5. **Engineering**
+   - Project structure
+   - Logging system
+   - Exception handling
+   - Documentation writing
 
-### 项目亮点
+### Project Highlights
 
-✨ **完整的 CRUD API**
-✨ **自动数据验证**
-✨ **SQLite 持久化**
-✨ **搜索和筛选**
-✨ **分页支持**
-✨ **统计功能**
-✨ **完整测试**
-✨ **详细文档**
+✨ **Complete CRUD API**
+✨ **Automatic Data Validation**
+✨ **SQLite Persistence**
+✨ **Search and Filter**
+✨ **Pagination Support**
+✨ **Statistics Functionality**
+✨ **Complete Testing**
+✨ **Detailed Documentation**
 
-### 下一步学习
+### Next Steps
 
-1. **用户认证** - JWT Token
-2. **数据库迁移** - Alembic
-3. **异步操作** - async/await
-4. **缓存** - Redis
-5. **消息队列** - Celery
-6. **微服务** - Docker + Kubernetes
+1. **User Authentication** - JWT Token
+2. **Database Migration** - Alembic
+3. **Async Operations** - async/await
+4. **Caching** - Redis
+5. **Message Queue** - Celery
+6. **Microservices** - Docker + Kubernetes
 
 ---
 
-## 🎉 恭喜完成 Week 2！
+## 🎉 Congratulations on Completing Week 2!
 
-你已经成功构建了一个完整的 FastAPI TODO API！
+You have successfully built a complete FastAPI TODO API!
 
-这是一个可以写进简历的项目：
-- ✅ 现代化的技术栈
-- ✅ 完整的功能实现
-- ✅ 高质量的代码
-- ✅ 完善的测试
-- ✅ 详细的文档
+This is a project that can be added to your resume:
+- ✅ Modern tech stack
+- ✅ Complete feature implementation
+- ✅ High-quality code
+- ✅ Comprehensive testing
+- ✅ Detailed documentation
 
-**继续保持学习的热情，向 Week 3 进发！** 🚀
+**Keep up the enthusiasm for learning and move on to Week 3!** 🚀

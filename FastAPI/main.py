@@ -5,7 +5,20 @@ from db import SessionLocal
 from schemas import TodoCreate, Todo, TodoUpdate
 import services
 
+from log_config import setup_logging, get_request_logger
+
 app = FastAPI(title="Simple Todo API")
+
+logger=setup_logging(level="DEBUG",log_to_file=True)#or INFO
+request_logger = get_request_logger()
+
+@app.middleware("http")
+async def log_requests(request,call_next):
+    request_logger.info(f"Request: {request.method} {request.url}")
+    response=await call_next(request)
+    request_logger.info(f"Response:{response.status_code}")
+    return response
+
 
 # 读依赖
 def get_db():
@@ -47,6 +60,7 @@ def update_todo(id: int, update: TodoUpdate, db: Session = Depends(get_db_tx)):
 def delete_todo(id: int, db: Session = Depends(get_db_tx)):
     services.delete_todo_service(db, id)
 
+
 # ========================================
 # 🔬 调试和实验路由
 # ========================================
@@ -60,3 +74,7 @@ def tx_fail(db: Session = Depends(get_db_tx)):
 def tx_atomic(db: Session = Depends(get_db_tx)):
     """测试原子性 - 多步操作中途失败应全部回滚"""
     return services.test_tx_atomic_service(db)
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("application startup complete -database tables created")

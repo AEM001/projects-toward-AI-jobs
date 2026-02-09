@@ -1,41 +1,43 @@
-# Day 5 实战指南：异常处理 + 日志系统 + 数据验证
+# Day 5 Practical Guide: Exception Handling + Logging System + Data Validation
 
-## 🎯 今日目标
-- 实现统一的异常处理
-- 添加完整的日志系统
-- 增强数据验证
-- 添加请求/响应中间件
-- 实现 API 限流（可选）
+## 🎯 Today's Goals
 
-**预计时间**: 2-3 小时  
-**难度**: ⭐⭐⭐ (中级)
+- Implement unified exception handling
+- Add complete logging system
+- Enhance data validation
+- Add request/response middleware
+- Implement API rate limiting (optional)
+
+**Estimated Time**: 2-3 hours  
+**Difficulty**: ⭐⭐⭐ (Intermediate)
 
 ---
 
-## 📚 开始前的准备（30 分钟）
+## 📚 Preparation (30 minutes)
 
-### 1. 阅读学习资料
+### 1. Read Learning Materials
+
 - [FastAPI Exception Handling](https://fastapi.tiangolo.com/tutorial/handling-errors/)
-- [Python logging 模块](https://docs.python.org/3/library/logging.html)
+- [Python logging module](https://docs.python.org/3/library/logging.html)
 - [FastAPI Middleware](https://fastapi.tiangolo.com/tutorial/middleware/)
 
 ---
 
-## 🛠️ 实战步骤
+## 🛠️ Practical Steps
 
-### Step 1: 创建自定义异常（30 分钟）⭐ 核心
+### Step 1: Create Custom Exceptions (30 minutes) ⭐ Core
 
-创建 `src/utils/exceptions.py`：
+Create `src/utils/exceptions.py`:
 
 ```python
 """
-自定义异常类
+Custom exception classes
 """
 from fastapi import HTTPException, status
 
 
 class TodoNotFoundException(HTTPException):
-    """Todo 不存在异常"""
+    """Todo not found exception"""
     def __init__(self, todo_id: int):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -44,7 +46,7 @@ class TodoNotFoundException(HTTPException):
 
 
 class TodoValidationException(HTTPException):
-    """Todo 验证异常"""
+    """Todo validation exception"""
     def __init__(self, detail: str):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -53,7 +55,7 @@ class TodoValidationException(HTTPException):
 
 
 class DatabaseException(HTTPException):
-    """数据库异常"""
+    """Database exception"""
     def __init__(self, detail: str = "Database error occurred"):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -61,13 +63,13 @@ class DatabaseException(HTTPException):
         )
 ```
 
-### Step 2: 添加日志系统（40 分钟）⭐ 核心
+### Step 2: Add Logging System (40 minutes) ⭐ Core
 
-创建 `src/utils/logger.py`：
+Create `src/utils/logger.py`:
 
 ```python
 """
-日志配置
+Logging configuration
 """
 import logging
 import sys
@@ -76,38 +78,38 @@ from pathlib import Path
 
 def setup_logger(name: str = "fastapi_todo") -> logging.Logger:
     """
-    配置日志系统
-    
+    Configure logging system
+
     Args:
-        name: 日志器名称
-        
+        name: Logger name
+
     Returns:
-        配置好的日志器
+        Configured logger
     """
-    # 创建日志器
+    # Create logger
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    
-    # 避免重复添加处理器
+
+    # Avoid duplicate handlers
     if logger.handlers:
         return logger
-    
-    # 日志格式
+
+    # Log format
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
-    
-    # 控制台处理器
+
+    # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-    
-    # 文件处理器
+
+    # File handler
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
-    
+
     file_handler = logging.FileHandler(
         log_dir / "app.log",
         encoding="utf-8"
@@ -115,21 +117,21 @@ def setup_logger(name: str = "fastapi_todo") -> logging.Logger:
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    
+
     return logger
 
 
-# 创建全局日志器
+# Create global logger
 logger = setup_logger()
 ```
 
-### Step 3: 添加请求日志中间件（30 分钟）
+### Step 3: Add Request Logging Middleware (30 minutes)
 
-创建 `src/utils/middleware.py`：
+Create `src/utils/middleware.py`:
 
 ```python
 """
-自定义中间件
+Custom middleware
 """
 import time
 from fastapi import Request
@@ -138,38 +140,38 @@ from src.utils.logger import logger
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """请求日志中间件"""
-    
+    """Request logging middleware"""
+
     async def dispatch(self, request: Request, call_next):
         """
-        记录每个请求的信息
+        Log information for each request
         """
         start_time = time.time()
-        
-        # 记录请求信息
+
+        # Log request info
         logger.info(f"Request: {request.method} {request.url.path}")
-        
-        # 处理请求
+
+        # Process request
         response = await call_next(request)
-        
-        # 计算处理时间
+
+        # Calculate processing time
         process_time = time.time() - start_time
-        
-        # 记录响应信息
+
+        # Log response info
         logger.info(
             f"Response: {response.status_code} "
             f"- Time: {process_time:.3f}s"
         )
-        
-        # 添加处理时间到响应头
+
+        # Add processing time to response headers
         response.headers["X-Process-Time"] = str(process_time)
-        
+
         return response
 ```
 
-### Step 4: 增强数据验证（30 分钟）
+### Step 4: Enhance Data Validation (30 minutes)
 
-更新 `src/schemas/todo.py`，添加自定义验证器：
+Update `src/schemas/todo.py`, add custom validators:
 
 ```python
 from pydantic import field_validator
@@ -177,29 +179,29 @@ import re
 
 
 class TodoCreate(TodoBase):
-    """创建 Todo 的请求模型"""
-    
+    """Todo creation request model"""
+
     @field_validator('title')
     @classmethod
     def validate_title(cls, v: str) -> str:
-        """验证标题"""
-        # 去除首尾空格
+        """Validate title"""
+        # Remove leading/trailing whitespace
         v = v.strip()
-        
-        # 检查是否为空
+
+        # Check if empty
         if not v:
-            raise ValueError('标题不能为空')
-        
-        # 检查是否包含非法字符
+            raise ValueError('Title cannot be empty')
+
+        # Check for illegal characters
         if re.search(r'[<>]', v):
-            raise ValueError('标题不能包含 < 或 > 字符')
-        
+            raise ValueError('Title cannot contain < or > characters')
+
         return v
-    
+
     @field_validator('description')
     @classmethod
     def validate_description(cls, v: str | None) -> str | None:
-        """验证描述"""
+        """Validate description"""
         if v:
             v = v.strip()
             if not v:
@@ -207,13 +209,13 @@ class TodoCreate(TodoBase):
         return v
 ```
 
-### Step 5: 更新 main.py 集成所有功能（40 分钟）⭐ 核心
+### Step 5: Update main.py to Integrate All Features (40 minutes) ⭐ Core
 
-更新 `src/main.py`：
+Update `src/main.py`:
 
 ```python
 """
-完整的 FastAPI TODO API（带异常处理和日志）
+Complete FastAPI TODO API (with exception handling and logging)
 """
 from fastapi import FastAPI, HTTPException, Query, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -233,11 +235,11 @@ from src.utils.exceptions import TodoNotFoundException, DatabaseException
 
 app = FastAPI(
     title="TODO API",
-    description="完整的 RESTful TODO 管理 API（带异常处理和日志）",
+    description="Complete RESTful TODO Management API (with exception handling and logging)",
     version="1.0.0",
 )
 
-# 添加 CORS 中间件
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -246,72 +248,72 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 添加请求日志中间件
+# Add request logging middleware
 app.add_middleware(RequestLoggingMiddleware)
 
 
-# 全局异常处理器
+# Global exception handlers
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """处理请求验证错误"""
+    """Handle request validation errors"""
     logger.error(f"Validation error: {exc.errors()}")
     return JSONResponse(
         status_code=422,
         content={
             "detail": exc.errors(),
-            "message": "请求数据验证失败"
+            "message": "Request data validation failed"
         }
     )
 
 
 @app.exception_handler(SQLAlchemyError)
 async def database_exception_handler(request: Request, exc: SQLAlchemyError):
-    """处理数据库错误"""
+    """Handle database errors"""
     logger.error(f"Database error: {str(exc)}")
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "数据库错误",
-            "message": "服务器内部错误，请稍后重试"
+            "detail": "Database error",
+            "message": "Internal server error, please try again later"
         }
     )
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """处理所有未捕获的异常"""
+    """Handle all uncaught exceptions"""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "服务器内部错误",
-            "message": "发生未知错误，请联系管理员"
+            "detail": "Internal server error",
+            "message": "Unknown error occurred, please contact administrator"
         }
     )
 
 
 @app.on_event("startup")
 async def startup_event():
-    """应用启动事件"""
+    """Application startup event"""
     try:
         init_db()
-        logger.info("🚀 FastAPI 应用启动成功！")
-        logger.info("📖 访问 http://localhost:8000/docs 查看 API 文档")
+        logger.info("🚀 FastAPI application started successfully!")
+        logger.info("📖 Visit http://localhost:8000/docs to view API documentation")
     except Exception as e:
-        logger.error(f"应用启动失败: {str(e)}", exc_info=True)
+        logger.error(f"Application startup failed: {str(e)}", exc_info=True)
         raise
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """应用关闭事件"""
-    logger.info("👋 FastAPI 应用已关闭")
+    """Application shutdown event"""
+    logger.info("👋 FastAPI application has been shut down")
 
 
 @app.get("/", tags=["Root"])
 async def root():
-    """根路径"""
-    logger.info("访问根路径")
+    """Root path"""
+    logger.info("Accessing root path")
     return {
         "message": "Welcome to TODO API",
         "version": "1.0.0",
@@ -321,7 +323,7 @@ async def root():
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """健康检查"""
+    """Health check"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat()
@@ -333,34 +335,34 @@ async def create_todo(
     todo: TodoCreate,
     db: Session = Depends(get_db)
 ):
-    """创建新的 TODO 任务"""
+    """Create new TODO task"""
     try:
-        logger.info(f"创建 Todo: {todo.title}")
+        logger.info(f"Creating Todo: {todo.title}")
         result = TodoService.create_todo(db, todo)
-        logger.info(f"Todo 创建成功: ID={result.id}")
+        logger.info(f"Todo created successfully: ID={result.id}")
         return result
     except Exception as e:
-        logger.error(f"创建 Todo 失败: {str(e)}")
-        raise DatabaseException("创建任务失败")
+        logger.error(f"Failed to create Todo: {str(e)}")
+        raise DatabaseException("Failed to create task")
 
 
 @app.get("/todos", response_model=TodoListResponse, tags=["Todos"])
 async def get_todos(
-    status: Optional[TodoStatus] = Query(None, description="按状态筛选"),
-    priority: Optional[TodoPriority] = Query(None, description="按优先级筛选"),
-    search: Optional[str] = Query(None, description="搜索标题或描述"),
-    sort_by: TodoSortField = Query(TodoSortField.CREATED_AT, description="排序字段"),
-    sort_order: SortOrder = Query(SortOrder.DESC, description="排序顺序"),
-    page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(10, ge=1, le=100, description="每页数量"),
+    status: Optional[TodoStatus] = Query(None, description="Filter by status"),
+    priority: Optional[TodoPriority] = Query(None, description="Filter by priority"),
+    search: Optional[str] = Query(None, description="Search title or description"),
+    sort_by: TodoSortField = Query(TodoSortField.CREATED_AT, description="Sort field"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="Sort order"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     db: Session = Depends(get_db)
 ):
-    """获取 TODO 列表"""
+    """Get TODO list"""
     try:
-        logger.info(f"获取 Todo 列表: page={page}, page_size={page_size}")
-        
+        logger.info(f"Getting Todo list: page={page}, page_size={page_size}")
+
         skip = (page - 1) * page_size
-        
+
         todos, total = TodoService.get_todos(
             db=db,
             status=status,
@@ -371,11 +373,11 @@ async def get_todos(
             skip=skip,
             limit=page_size
         )
-        
+
         total_pages = math.ceil(total / page_size) if total > 0 else 0
-        
-        logger.info(f"返回 {len(todos)} 条 Todo，总计 {total} 条")
-        
+
+        logger.info(f"Returning {len(todos)} Todos, total {total}")
+
         return {
             "todos": todos,
             "total": total,
@@ -384,8 +386,8 @@ async def get_todos(
             "total_pages": total_pages
         }
     except Exception as e:
-        logger.error(f"获取 Todo 列表失败: {str(e)}")
-        raise DatabaseException("获取任务列表失败")
+        logger.error(f"Failed to get Todo list: {str(e)}")
+        raise DatabaseException("Failed to get task list")
 
 
 @app.get("/todos/{todo_id}", response_model=TodoResponse, tags=["Todos"])
@@ -393,15 +395,15 @@ async def get_todo(
     todo_id: int,
     db: Session = Depends(get_db)
 ):
-    """获取单个 TODO 任务"""
-    logger.info(f"获取 Todo: ID={todo_id}")
-    
+    """Get single TODO task"""
+    logger.info(f"Getting Todo: ID={todo_id}")
+
     todo = TodoService.get_todo(db, todo_id)
-    
+
     if not todo:
-        logger.warning(f"Todo 不存在: ID={todo_id}")
+        logger.warning(f"Todo not found: ID={todo_id}")
         raise TodoNotFoundException(todo_id)
-    
+
     return todo
 
 
@@ -411,23 +413,23 @@ async def update_todo(
     todo_update: TodoUpdate,
     db: Session = Depends(get_db)
 ):
-    """更新 TODO 任务"""
+    """Update TODO task"""
     try:
-        logger.info(f"更新 Todo: ID={todo_id}")
-        
+        logger.info(f"Updating Todo: ID={todo_id}")
+
         todo = TodoService.update_todo(db, todo_id, todo_update)
-        
+
         if not todo:
-            logger.warning(f"Todo 不存在: ID={todo_id}")
+            logger.warning(f"Todo not found: ID={todo_id}")
             raise TodoNotFoundException(todo_id)
-        
-        logger.info(f"Todo 更新成功: ID={todo_id}")
+
+        logger.info(f"Todo updated successfully: ID={todo_id}")
         return todo
     except TodoNotFoundException:
         raise
     except Exception as e:
-        logger.error(f"更新 Todo 失败: {str(e)}")
-        raise DatabaseException("更新任务失败")
+        logger.error(f"Failed to update Todo: {str(e)}")
+        raise DatabaseException("Failed to update task")
 
 
 @app.delete("/todos/{todo_id}", status_code=204, tags=["Todos"])
@@ -435,79 +437,84 @@ async def delete_todo(
     todo_id: int,
     db: Session = Depends(get_db)
 ):
-    """删除 TODO 任务"""
+    """Delete TODO task"""
     try:
-        logger.info(f"删除 Todo: ID={todo_id}")
-        
+        logger.info(f"Deleting Todo: ID={todo_id}")
+
         success = TodoService.delete_todo(db, todo_id)
-        
+
         if not success:
-            logger.warning(f"Todo 不存在: ID={todo_id}")
+            logger.warning(f"Todo not found: ID={todo_id}")
             raise TodoNotFoundException(todo_id)
-        
-        logger.info(f"Todo 删除成功: ID={todo_id}")
+
+        logger.info(f"Todo deleted successfully: ID={todo_id}")
         return None
     except TodoNotFoundException:
         raise
     except Exception as e:
-        logger.error(f"删除 Todo 失败: {str(e)}")
-        raise DatabaseException("删除任务失败")
+        logger.error(f"Failed to delete Todo: {str(e)}")
+        raise DatabaseException("Failed to delete task")
 ```
 
 ---
 
-## ✅ 今日成果检查
+## ✅ Today's Results Check
 
-### 文件清单
-- [x] `src/utils/exceptions.py` - 自定义异常
-- [x] `src/utils/logger.py` - 日志系统
-- [x] `src/utils/middleware.py` - 中间件
-- [x] 更新的 `src/main.py` - 集成所有功能
-- [x] `logs/app.log` - 日志文件（自动生成）
+### File Checklist
 
-### 功能验证
+- [x] `src/utils/exceptions.py` - Custom exceptions
+- [x] `src/utils/logger.py` - Logging system
+- [x] `src/utils/middleware.py` - Middleware
+- [x] Updated `src/main.py` - Integrate all features
+- [x] `logs/app.log` - Log file (auto-generated)
+
+### Function Verification
+
 ```bash
-# 1. 启动应用，观察日志
+# 1. Start application, observe logs
 uvicorn src.main:app --reload
 
-# 2. 测试正常请求（查看日志）
+# 2. Test normal requests (check logs)
 curl "http://localhost:8000/todos"
 
-# 3. 测试验证错误
+# 3. Test validation errors
 curl -X POST "http://localhost:8000/todos" \
   -H "Content-Type: application/json" \
   -d '{"title":"<invalid>"}'
 
-# 4. 测试 404 错误
+# 4. Test 404 errors
 curl "http://localhost:8000/todos/999"
 
-# 5. 查看日志文件
+# 5. View log file
 cat logs/app.log
 ```
 
-### 学习收获
-- [x] 掌握自定义异常
-- [x] 学会配置日志系统
-- [x] 理解中间件机制
-- [x] 掌握全局异常处理
-- [x] 学会增强数据验证
+### Learning Outcomes
+
+- [x] Master custom exceptions
+- [x] Learn to configure logging system
+- [x] Understand middleware mechanism
+- [x] Master global exception handling
+- [x] Learn to enhance data validation
 
 ---
 
-## 📝 今日总结
+## 📝 Today's Summary
 
-在 Day 5，你完成了：
-1. ✅ 实现了统一异常处理
-2. ✅ 添加了完整日志系统
-3. ✅ 实现了请求日志中间件
-4. ✅ 增强了数据验证
-5. ✅ 提升了代码健壮性
+On Day 5, you completed:
 
-**明天预告（Day 6）**：
-- 编写完整的 API 测试
-- 创建 Postman 测试集合
-- 运行测试覆盖率分析
+1. ✅ Implemented unified exception handling
+2. ✅ Added complete logging system
+3. ✅ Implemented request logging middleware
+4. ✅ Enhanced data validation
+5. ✅ Improved code robustness
+
+**Tomorrow's Preview (Day 6)**:
+
+- Write complete API tests
+- Create Postman test collections
+- Run test coverage analysis
 
 ---
 
-**恭喜完成 Day 5！应用已经很健壮了！** 🎉
+**Congratulations on completing Day 5! The application is now very robust!** 🎉

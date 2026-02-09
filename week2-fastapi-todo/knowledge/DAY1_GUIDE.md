@@ -1,56 +1,62 @@
-# Day 1 实战指南：FastAPI 基础 + 项目初始化
+# Day 1 Practical Guide: FastAPI Basics + Project Initialization
 
-## 🎯 今日目标
-- 理解 FastAPI 框架核心概念
-- 搭建完整的项目目录结构
-- 创建第一个 FastAPI 应用
-- 实现基础 API 端点
-- 访问自动生成的 Swagger 文档
+## 🎯 Today's Goals
 
-**预计时间**: 2-3 小时  
-**难度**: ⭐⭐ (入门)
+- Understand core FastAPI framework concepts
+- Set up a complete project directory structure
+- Create your first FastAPI application
+- Implement basic API endpoints
+- Access automatically generated Swagger documentation
+
+**Estimated Time**: 2-3 hours  
+**Difficulty**: ⭐⭐ (Beginner)
 
 ---
 
-## 📚 开始前的准备（30 分钟）
+## 📚 Preparation (30 minutes)
 
-### 1. 阅读学习资料
-快速浏览以下文档（重点看示例）：
-- [FastAPI 官方教程 - 第一步](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [FastAPI 路径参数](https://fastapi.tiangolo.com/tutorial/path-params/)
-- [FastAPI 查询参数](https://fastapi.tiangolo.com/tutorial/query-params/)
+### 1. Read Learning Materials
 
-### 2. 理解 FastAPI 核心概念
+Quickly browse the following documents (focus on examples):
 
-#### 什么是 FastAPI？
-- 现代、快速（高性能）的 Web 框架
-- 基于 Python 3.6+ 类型提示
-- 自动生成 API 文档（Swagger UI）
-- 自动数据验证（Pydantic）
-- 支持异步编程
+- [FastAPI Official Tutorial - First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
+- [FastAPI Path Parameters](https://fastapi.tiangolo.com/tutorial/path-params/)
+- [FastAPI Query Parameters](https://fastapi.tiangolo.com/tutorial/query-params/)
+
+### 2. Understand FastAPI Core Concepts
+
+#### What is FastAPI?
+
+- Modern, high-performance Web framework
+- Based on Python 3.6+ type hints
+- Automatically generated API documentation (Swagger UI)
+- Automatic data validation (Pydantic)
+- Supports asynchronous programming
 
 #### FastAPI vs Flask
-| 特性 | FastAPI | Flask |
-|------|---------|-------|
-| 性能 | 非常快（与 Node.js 相当） | 较慢 |
-| 数据验证 | 自动（Pydantic） | 手动 |
-| API 文档 | 自动生成 | 需要插件 |
-| 类型提示 | 必须 | 可选 |
-| 异步支持 | 原生支持 | 需要额外配置 |
 
-### 3. 理解项目结构
+| Feature           | FastAPI                           | Flask                 |
+| ----------------- | --------------------------------- | --------------------- |
+| Performance       | Very fast (comparable to Node.js) | Slower                |
+| Data Validation   | Automatic (Pydantic)              | Manual                |
+| API Documentation | Auto-generated                    | Requires plugins      |
+| Type Hints        | Mandatory                         | Optional              |
+| Async Support     | Native support                    | Requires extra config |
+
+### 3. Understand Project Structure
+
 ```
 week2-fastapi-todo/
 ├── config/
-│   └── settings.py          # 配置管理
+│   └── settings.py          # Configuration management
 ├── src/
-│   ├── main.py              # 今天的重点！
-│   ├── models/              # 数据库模型（明天）
-│   ├── schemas/             # Pydantic 模型（明天）
-│   ├── routers/             # API 路由
-│   ├── services/            # 业务逻辑
-│   ├── database/            # 数据库配置
-│   └── utils/               # 工具函数
+│   ├── main.py              # Today's focus!
+│   ├── models/              # Database models (Tomorrow)
+│   ├── schemas/             # Pydantic models (Tomorrow)
+│   ├── routers/             # API routes
+│   ├── services/            # Business logic
+│   ├── database/            # Database configuration
+│   └── utils/               # Utility functions
 ├── tests/
 ├── .env
 ├── requirements.txt
@@ -59,15 +65,15 @@ week2-fastapi-todo/
 
 ---
 
-## 🛠️ 实战步骤
+## 🛠️ Practical Steps
 
-### Step 1: 创建项目目录（10 分钟）
+### Step 1: Create Project Directory (10 minutes)
 
 ```bash
-# 1. 进入项目目录
+# 1. Enter project directory
 cd /Users/Mac/code/project/week2-fastapi-todo
 
-# 2. 创建所有 __init__.py 文件
+# 2. Create all __init__.py files
 touch config/__init__.py
 touch src/__init__.py
 touch src/models/__init__.py
@@ -78,61 +84,61 @@ touch src/database/__init__.py
 touch src/utils/__init__.py
 touch tests/__init__.py
 
-# 3. 验证目录结构
+# 3. Verify directory structure
 tree -L 2
 ```
 
-### Step 2: 配置虚拟环境和依赖（10 分钟）
+### Step 2: Configure Virtual Environment and Dependencies (10 minutes)
 
 ```bash
-# 1. 创建虚拟环境
+# 1. Create virtual environment
 python3 -m venv venv
 
-# 2. 激活虚拟环境
+# 2. Activate virtual environment
 source venv/bin/activate  # macOS/Linux
 
-# 3. 安装依赖
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. 验证安装
+# 4. Verify installation
 python -c "import fastapi; print(fastapi.__version__)"
 ```
 
-### Step 3: 创建第一个 FastAPI 应用（30 分钟）⭐ 核心
+### Step 3: Create First FastAPI App (30 minutes) ⭐ Core
 
-创建 `src/main.py` 文件：
+Create `src/main.py` file:
 
 ```python
 """
-FastAPI TODO API 主应用
+FastAPI TODO API Main Application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# 创建 FastAPI 应用实例
+# Create FastAPI application instance
 app = FastAPI(
     title="TODO API",
-    description="一个简单的 TODO 管理 API",
+    description="A simple TODO management API",
     version="1.0.0",
-    docs_url="/docs",  # Swagger UI 路径
-    redoc_url="/redoc"  # ReDoc 路径
+    docs_url="/docs",  # Swagger UI path
+    redoc_url="/redoc"  # ReDoc path
 )
 
-# 配置 CORS（跨域资源共享）
+# Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
+    allow_origins=["*"],  # Production should restrict to specific domains
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# 根路径 - 健康检查
+# Root path - Health check
 @app.get("/")
 async def root():
     """
-    根路径 - API 健康检查
+    Root path - API Health check
     """
     return {
         "message": "Welcome to TODO API",
@@ -141,36 +147,36 @@ async def root():
     }
 
 
-# 健康检查端点
+# Health check endpoint
 @app.get("/health")
 async def health_check():
     """
-    健康检查端点
+    Health check endpoint
     """
     return {"status": "ok"}
 
 
-# 临时的内存存储（后面会用数据库替代）
+# Temporary in-memory storage (will be replaced by database later)
 todos_db = []
 todo_id_counter = 1
 
 
-# 获取所有 TODO
+# Get all TODOs
 @app.get("/todos")
 async def get_todos():
     """
-    获取所有 TODO 任务
+    Get all TODO tasks
     """
     return {"todos": todos_db, "count": len(todos_db)}
 
 
-# 获取单个 TODO
+# Get single TODO
 @app.get("/todos/{todo_id}")
 async def get_todo(todo_id: int):
     """
-    根据 ID 获取单个 TODO 任务
-    
-    - **todo_id**: TODO 任务的唯一标识符
+    Get a single TODO task by ID
+
+    - **todo_id**: Unique identifier for the TODO task
     """
     for todo in todos_db:
         if todo["id"] == todo_id:
@@ -178,217 +184,223 @@ async def get_todo(todo_id: int):
     return {"error": "Todo not found"}, 404
 
 
-# 创建 TODO（简化版，明天会用 Pydantic）
+# Create TODO (Simplified version, will use Pydantic tomorrow)
 @app.post("/todos")
 async def create_todo(title: str, priority: str = "medium"):
     """
-    创建新的 TODO 任务
-    
-    - **title**: 任务标题
-    - **priority**: 优先级（low, medium, high）
+    Create a new TODO task
+
+    - **title**: Task title
+    - **priority**: Priority (low, medium, high)
     """
     global todo_id_counter
-    
+
     new_todo = {
         "id": todo_id_counter,
         "title": title,
         "priority": priority,
         "status": "pending"
     }
-    
+
     todos_db.append(new_todo)
     todo_id_counter += 1
-    
+
     return new_todo
 
 
-# 删除 TODO
+# Delete TODO
 @app.delete("/todos/{todo_id}")
 async def delete_todo(todo_id: int):
     """
-    删除指定的 TODO 任务
-    
-    - **todo_id**: 要删除的 TODO 任务 ID
+    Delete a specific TODO task
+
+    - **todo_id**: ID of the TODO task to delete
     """
     global todos_db
-    
+
     for i, todo in enumerate(todos_db):
         if todo["id"] == todo_id:
             deleted_todo = todos_db.pop(i)
             return {"message": "Todo deleted", "todo": deleted_todo}
-    
+
     return {"error": "Todo not found"}, 404
 
 
-# 应用启动事件
+# App startup event
 @app.on_event("startup")
 async def startup_event():
     """
-    应用启动时执行
+    Executed when the application starts
     """
-    print("🚀 FastAPI 应用启动成功！")
-    print("📖 访问 http://localhost:8000/docs 查看 API 文档")
+    print("🚀 FastAPI Application started successfully!")
+    print("📖 Visit http://localhost:8000/docs to view API documentation")
 
 
-# 应用关闭事件
+# App shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
     """
-    应用关闭时执行
+    Executed when the application shuts down
     """
-    print("👋 FastAPI 应用已关闭")
+    print("👋 FastAPI Application closed")
 ```
 
-**代码讲解**：
-1. **FastAPI 实例** - 创建应用，配置元数据
-2. **CORS 中间件** - 允许跨域请求
-3. **路由装饰器** - `@app.get()`, `@app.post()`, `@app.delete()`
-4. **路径参数** - `{todo_id}` 自动解析和验证
-5. **查询参数** - 函数参数自动成为查询参数
-6. **异步函数** - 使用 `async def`（也可以用普通 `def`）
-7. **生命周期事件** - `startup` 和 `shutdown` 事件
+**Code Explanation**:
 
-### Step 4: 启动应用（10 分钟）
+1. **FastAPI Instance** - Create application, configure metadata
+2. **CORS Middleware** - Allow cross-origin requests
+3. **Route Decorators** - `@app.get()`, `@app.post()`, `@app.delete()`
+4. **Path Parameters** - `{todo_id}` auto-parsing and validation
+5. **Query Parameters** - Function parameters automatically become query parameters
+6. **Async Functions** - Use `async def` (can also use regular `def`)
+7. **Lifecycle Events** - `startup` and `shutdown` events
+
+### Step 4: Start Application (10 minutes)
 
 ```bash
-# 启动开发服务器（自动重载）
+# Start development server (auto-reload)
 uvicorn src.main:app --reload
 
-# 指定端口
+# Specify port
 uvicorn src.main:app --reload --port 8000
 
-# 指定主机（允许外部访问）
+# Specify host (allow external access)
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**预期输出**：
+**Expected Output**:
+
 ```
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [xxxxx] using WatchFiles
 INFO:     Started server process [xxxxx]
 INFO:     Waiting for application startup.
-🚀 FastAPI 应用启动成功！
-📖 访问 http://localhost:8000/docs 查看 API 文档
+🚀 FastAPI Application started successfully!
+📖 Visit http://localhost:8000/docs to view API documentation
 INFO:     Application startup complete.
 ```
 
-### Step 5: 测试 API（30 分钟）⭐ 核心
+### Step 5: Test API (30 minutes) ⭐ Core
 
-#### 方法 1: 使用 Swagger UI（推荐）
+#### Method 1: Use Swagger UI (Recommended)
 
-1. 打开浏览器访问：`http://localhost:8000/docs`
-2. 你会看到自动生成的交互式 API 文档
-3. 点击任意端点，点击 "Try it out"
-4. 填写参数，点击 "Execute"
-5. 查看响应结果
+1. Open browser and visit: `http://localhost:8000/docs`
+2. You will see auto-generated interactive API documentation
+3. Click any endpoint, click "Try it out"
+4. Fill in parameters, click "Execute"
+5. View response results
 
-#### 方法 2: 使用 curl
+#### Method 2: Use curl
 
 ```bash
-# 1. 健康检查
+# 1. Health check
 curl http://localhost:8000/
 
-# 2. 创建 TODO
-curl -X POST "http://localhost:8000/todos?title=学习FastAPI&priority=high"
+# 2. Create TODO
+curl -X POST "http://localhost:8000/todos?title=LearnFastAPI&priority=high"
 
-# 3. 获取所有 TODO
+# 3. Get all TODOs
 curl http://localhost:8000/todos
 
-# 4. 获取单个 TODO
+# 4. Get single TODO
 curl http://localhost:8000/todos/1
 
-# 5. 删除 TODO
+# 5. Delete TODO
 curl -X DELETE http://localhost:8000/todos/1
 ```
 
-#### 方法 3: 使用 Python requests
+#### Method 3: Use Python requests
 
-创建测试脚本 `test_manual.py`：
+Create test script `test_manual.py`:
 
 ```python
 import requests
 
 BASE_URL = "http://localhost:8000"
 
-# 创建 TODO
+# Create TODO
 response = requests.post(
     f"{BASE_URL}/todos",
-    params={"title": "学习 FastAPI", "priority": "high"}
+    params={"title": "Learn FastAPI", "priority": "high"}
 )
-print("创建 TODO:", response.json())
+print("Create TODO:", response.json())
 
-# 获取所有 TODO
+# Get all TODOs
 response = requests.get(f"{BASE_URL}/todos")
-print("所有 TODO:", response.json())
+print("All TODOs:", response.json())
 
-# 获取单个 TODO
+# Get single TODO
 response = requests.get(f"{BASE_URL}/todos/1")
-print("单个 TODO:", response.json())
+print("Single TODO:", response.json())
 
-# 删除 TODO
+# Delete TODO
 response = requests.delete(f"{BASE_URL}/todos/1")
-print("删除 TODO:", response.json())
+print("Delete TODO:", response.json())
 ```
 
-运行测试：
+Run test:
+
 ```bash
 python test_manual.py
 ```
 
-### Step 6: 探索 API 文档（20 分钟）
+### Step 6: Explore API Documentation (20 minutes)
 
 #### Swagger UI (`/docs`)
-- 交互式 API 文档
-- 可以直接测试 API
-- 查看请求/响应模型
-- 查看参数说明
+
+- Interactive API documentation
+- Can test API directly
+- View request/response models
+- View parameter descriptions
 
 #### ReDoc (`/redoc`)
-- 更美观的文档展示
-- 适合阅读和分享
-- 不能直接测试
+
+- More aesthetic documentation display
+- Suitable for reading and sharing
+- Cannot test directly
 
 #### OpenAPI Schema (`/openapi.json`)
-- 原始的 OpenAPI 规范
-- 可以导入到 Postman
-- 可以生成客户端代码
 
-### Step 7: 添加配置管理（20 分钟）
+- Raw OpenAPI specification
+- Can be imported into Postman
+- Can generate client code
 
-创建 `config/settings.py`：
+### Step 7: Add Configuration Management (20 minutes)
+
+Create `config/settings.py`:
 
 ```python
 """
-应用配置管理
+Application Configuration Management
 """
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     """
-    应用配置类
+    Application settings class
     """
-    # 应用信息
+    # Application info
     app_name: str = "FastAPI TODO API"
     app_version: str = "1.0.0"
     debug: bool = True
-    
-    # API 配置
+
+    # API configuration
     api_prefix: str = "/api/v1"
-    
-    # CORS 配置
+
+    # CORS configuration
     cors_origins: list = ["http://localhost:3000", "http://localhost:8080"]
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = False
 
 
-# 创建配置实例
+# Create settings instance
 settings = Settings()
 ```
 
-更新 `src/main.py` 使用配置：
+Update `src/main.py` to use settings:
 
 ```python
 from config.settings import settings
@@ -396,104 +408,116 @@ from config.settings import settings
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    # ... 其他配置
+    # ... other configs
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    # ... 其他配置
+    # ... other configs
 )
 ```
 
-创建 `.env` 文件：
+Create `.env` file:
+
 ```bash
 cp .env.example .env
 ```
 
 ---
 
-## ✅ 今日成果检查
+## ✅ Today's Accomplishments
 
-### 文件清单
-- [x] 完整的项目目录结构
-- [x] `requirements.txt` - 依赖列表
-- [x] `.gitignore` - Git 忽略配置
-- [x] `.env.example` 和 `.env` - 环境变量
-- [x] `src/main.py` - FastAPI 应用（约 120 行）
-- [x] `config/settings.py` - 配置管理
+### File Checklist
 
-### 功能验证
+- [x] Complete project directory structure
+- [x] `requirements.txt` - Dependency list
+- [x] `.gitignore` - Git ignore configuration
+- [x] `.env.example` and `.env` - Environment variables
+- [x] `src/main.py` - FastAPI application (approx. 120 lines)
+- [x] `config/settings.py` - Configuration management
+
+### Functionality Verification
+
 ```bash
-# 1. 启动应用
+# 1. Start application
 uvicorn src.main:app --reload
 
-# 2. 访问文档
-# 打开浏览器：http://localhost:8000/docs
+# 2. Access documentation
+# Open browser: http://localhost:8000/docs
 
-# 3. 测试 API
+# 3. Test API
 curl http://localhost:8000/
-curl -X POST "http://localhost:8000/todos?title=测试&priority=high"
+curl -X POST "http://localhost:8000/todos?title=Test&priority=high"
 curl http://localhost:8000/todos
 ```
 
-### 学习收获
-- [x] 理解 FastAPI 框架基础
-- [x] 学会创建 FastAPI 应用
-- [x] 掌握路由装饰器的使用
-- [x] 了解路径参数和查询参数
-- [x] 学会使用 Swagger UI 测试 API
-- [x] 理解 CORS 配置
-- [x] 学会使用 Pydantic Settings
+### Learning Outcomes
+
+- [x] Understand FastAPI framework basics
+- [x] Learn to create FastAPI applications
+- [x] Master route decorators usage
+- [x] Understand path parameters and query parameters
+- [x] Learn to test API using Swagger UI
+- [x] Understand CORS configuration
+- [x] Learn to use Pydantic Settings
 
 ---
 
-## 💡 常见问题
+## 💡 Frequently Asked Questions
 
-### Q1: FastAPI 和 Flask 有什么区别？
-**A**: FastAPI 更现代，性能更高，自动生成文档，自动数据验证。Flask 更简单，生态更成熟。
+### Q1: What is the difference between FastAPI and Flask?
 
-### Q2: 为什么要用 async def？
-**A**: 支持异步编程，提高并发性能。初学者可以先用普通 `def`，效果一样。
+**A**: FastAPI is more modern, has higher performance, automatically generates documentation, and handles data validation automatically. Flask is simpler and has a more mature ecosystem.
 
-### Q3: Swagger UI 是什么？
-**A**: 自动生成的交互式 API 文档，可以直接在浏览器中测试 API。
+### Q2: Why use async def?
 
-### Q4: 如何修改端口？
+**A**: Supports asynchronous programming to improve concurrency performance. Beginners can use regular `def` initially, as the effect is similar.
+
+### Q3: What is Swagger UI?
+
+**A**: An automatically generated interactive API documentation that allows you to test APIs directly in the browser.
+
+### Q4: How to change the port?
+
 **A**: `uvicorn src.main:app --reload --port 8080`
 
-### Q5: 为什么访问不了 /docs？
+### Q5: Why can't I access /docs?
+
 **A**: 
-1. 确认应用已启动
-2. 检查端口是否正确
-3. 确认没有防火墙阻止
+
+1. Confirm application is running
+2. Check if the port is correct
+3. Ensure no firewall is blocking access
 
 ---
 
-## 📝 今日总结
+## 📝 Today's Summary
 
-在 Day 1，你完成了：
-1. ✅ 搭建了 FastAPI 项目结构
-2. ✅ 创建了第一个 FastAPI 应用
-3. ✅ 实现了基础的 CRUD 端点
-4. ✅ 学会了使用 Swagger UI
-5. ✅ 配置了 CORS 和环境变量
+In Day 1, you completed:
 
-**明天预告（Day 2）**：
-- 学习 Pydantic 数据验证
-- 创建请求/响应模型
-- 实现完整的数据验证
-- 优化 API 端点
+1. ✅ Set up FastAPI project structure
+2. ✅ Created first FastAPI application
+3. ✅ Implemented basic CRUD endpoints
+4. ✅ Learned to use Swagger UI
+5. ✅ Configured CORS and environment variables
 
----
+**Coming Tomorrow (Day 2)**:
 
-## 🎯 作业（可选）
-
-1. **添加更新端点**：实现 `PUT /todos/{id}` 更新任务
-2. **添加查询参数**：支持按状态筛选 `GET /todos?status=pending`
-3. **自定义响应**：返回更友好的错误信息
-4. **探索文档**：阅读 FastAPI 官方教程前 5 章
+- Learning Pydantic data validation
+- Creating request/response models
+- Implementing complete data validation
+- Optimizing API endpoints
 
 ---
 
-**恭喜完成 Day 1！明天我们将学习 Pydantic 数据验证！** 🎉
+## 🎯 Homework (Optional)
+
+1. **Add update endpoint**: Implement `PUT /todos/{id}` to update tasks
+2. **Add query parameter**: Support filtering by status `GET /todos?status=pending`
+3. **Custom response**: Return more user-friendly error messages
+4. **Explore documentation**: Read first 5 chapters of official FastAPI tutorial
+
+---
+
+**Congratulations on completing Day 1! Tomorrow we will learn Pydantic data validation!** 🎉

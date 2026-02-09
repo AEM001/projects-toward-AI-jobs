@@ -1,93 +1,98 @@
-# Day 3 实战指南：SQLite + SQLAlchemy ORM
+# Day 3 Practical Guide: SQLite + SQLAlchemy ORM
 
-## 🎯 今日目标
-- 理解 ORM（对象关系映射）概念
-- 配置 SQLAlchemy 数据库连接
-- 创建数据库模型（ORM Model）
-- 实现数据库会话管理
-- 将内存存储迁移到 SQLite
+## 🎯 Today's Goals
 
-**预计时间**: 2-3 小时  
-**难度**: ⭐⭐⭐ (中级)
+- Understand ORM (Object-Relational Mapping) concepts
+- Configure SQLAlchemy database connection
+- Create database models (ORM Model)
+- Implement database session management
+- Migrate from in-memory storage to SQLite
+
+**Estimated Time**: 2-3 hours  
+**Difficulty**: ⭐⭐⭐ (Intermediate)
 
 ---
 
-## 📚 开始前的准备（30 分钟）
+## 📚 Preparation (30 minutes)
 
-### 1. 阅读学习资料
-- [SQLAlchemy 官方教程](https://docs.sqlalchemy.org/en/20/tutorial/)
+### 1. Read Learning Materials
+
+- [SQLAlchemy Official Tutorial](https://docs.sqlalchemy.org/en/20/tutorial/)
 - [FastAPI SQL Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
-- [SQLite 基础](https://www.sqlite.org/docs.html)
+- [SQLite Basics](https://www.sqlite.org/docs.html)
 
-### 2. 理解核心概念
+### 2. Understand Core Concepts
 
-#### 什么是 ORM？
-- **ORM (Object-Relational Mapping)** - 对象关系映射
-- 用 Python 类表示数据库表
-- 用对象操作代替 SQL 语句
-- 自动处理数据类型转换
+#### What is ORM?
 
-#### SQLAlchemy 架构
-```
-应用层 (FastAPI)
-    ↓
-ORM 层 (SQLAlchemy Models)
-    ↓
-Core 层 (SQL Expression)
-    ↓
-数据库 (SQLite)
-```
+- **ORM (Object-Relational Mapping)** - Object-Relational Mapping
+- Represent database tables with Python classes
+- Use object operations instead of SQL statements
+- Automatic data type conversion
 
-#### Schema vs Model（重要！）
-- **Pydantic Schema**: API 层的数据验证和序列化
-- **SQLAlchemy Model**: 数据库层的表结构定义
+#### SQLAlchemy Architecture
 
 ```
-API 请求 → Pydantic Schema → 业务逻辑 → SQLAlchemy Model → 数据库
+Application Layer (FastAPI)
+    ↓
+ORM Layer (SQLAlchemy Models)
+    ↓
+Core Layer (SQL Expression)
+    ↓
+Database (SQLite)
+```
+
+#### Schema vs Model (Important!)
+
+- **Pydantic Schema**: Data validation and serialization at API layer
+- **SQLAlchemy Model**: Table structure definition at database layer
+
+```
+API Request → Pydantic Schema → Business Logic → SQLAlchemy Model → Database
 ```
 
 ---
 
-## 🛠️ 实战步骤
+## 🛠️ Practical Steps
 
-### Step 1: 配置数据库连接（30 分钟）⭐ 核心
+### Step 1: Configure Database Connection (30 minutes) ⭐ Core
 
-创建 `src/database/base.py`：
+Create `src/database/base.py`:
 
 ```python
 """
-SQLAlchemy Base 模型
+SQLAlchemy Base Model
 """
 from sqlalchemy.ext.declarative import declarative_base
 
-# 创建基类，所有 ORM 模型都继承这个类
+# Create base class, all ORM models inherit from this class
 Base = declarative_base()
 ```
 
-创建 `src/database/connection.py`：
+Create `src/database/connection.py`:
 
 ```python
 """
-数据库连接配置
+Database Connection Configuration
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 
-# 数据库 URL
+# Database URL
 # SQLite: sqlite:///./todo.db
 # PostgreSQL: postgresql://user:password@localhost/dbname
 DATABASE_URL = "sqlite:///./todo.db"
 
-# 创建数据库引擎
-# check_same_thread=False 是 SQLite 特有的配置
+# Create database engine
+# check_same_thread=False is specific to SQLite
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False},
-    echo=True  # 开发时打印 SQL 语句
+    echo=True  # Print SQL statements during development
 )
 
-# 创建会话工厂
+# Create session factory
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -97,9 +102,9 @@ SessionLocal = sessionmaker(
 
 def get_db() -> Generator[Session, None, None]:
     """
-    获取数据库会话（依赖注入）
-    
-    使用 yield 确保会话在请求结束后关闭
+    Get database session (dependency injection)
+
+    Use yield to ensure session is closed after request ends
     """
     db = SessionLocal()
     try:
@@ -110,30 +115,31 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db():
     """
-    初始化数据库
-    创建所有表
+    Initialize database
+    Create all tables
     """
     from src.database.base import Base
-    from src.models import todo  # 导入所有模型
-    
+    from src.models import todo  # Import all models
+
     Base.metadata.create_all(bind=engine)
-    print("✅ 数据库表创建成功！")
+    print("✅ Database tables created successfully!")
 ```
 
-**代码讲解**：
-1. **create_engine** - 创建数据库引擎
-2. **sessionmaker** - 创建会话工厂
-3. **get_db** - 依赖注入函数，自动管理会话生命周期
-4. **init_db** - 创建所有数据库表
+**Code Explanation**:
 
-### Step 2: 创建 ORM 模型（40 分钟）⭐ 核心
+1. **create_engine** - Create database engine
+2. **sessionmaker** - Create session factory
+3. **get_db** - Dependency injection function, automatically manages session lifecycle
+4. **init_db** - Create all database tables
 
-创建 `src/models/todo.py`：
+### Step 2: Create ORM Models (40 minutes) ⭐ Core
+
+Create `src/models/todo.py`:
 
 ```python
 """
-Todo ORM 模型
-定义数据库表结构
+Todo ORM Model
+Define database table structure
 """
 from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum
 from sqlalchemy.sql import func
@@ -144,14 +150,14 @@ from src.database.base import Base
 
 
 class TodoStatus(str, enum.Enum):
-    """任务状态枚举"""
+    """Task status enumeration"""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     DONE = "done"
 
 
 class TodoPriority(str, enum.Enum):
-    """任务优先级枚举"""
+    """Task priority enumeration"""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -159,19 +165,19 @@ class TodoPriority(str, enum.Enum):
 
 class Todo(Base):
     """
-    Todo ORM 模型
-    对应数据库中的 todos 表
+    Todo ORM Model
+    Corresponds to the todos table in the database
     """
     __tablename__ = "todos"
-    
-    # 主键
+
+    # Primary key
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    
-    # 任务信息
+
+    # Task information
     title = Column(String(200), nullable=False, index=True)
     description = Column(String(1000), nullable=True)
-    
-    # 状态和优先级
+
+    # Status and priority
     status = Column(
         SQLEnum(TodoStatus),
         default=TodoStatus.PENDING,
@@ -184,8 +190,8 @@ class Todo(Base):
         nullable=False,
         index=True
     )
-    
-    # 时间戳
+
+    # Timestamps
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -197,41 +203,42 @@ class Todo(Base):
         onupdate=func.now(),
         nullable=False
     )
-    
+
     def __repr__(self):
-        """字符串表示"""
+        """String representation"""
         return f"<Todo(id={self.id}, title='{self.title}', status='{self.status.value}')>"
 ```
 
-**代码讲解**：
-1. **__tablename__** - 指定表名
-2. **Column** - 定义列
-3. **primary_key** - 主键
-4. **index** - 创建索引，加快查询
-5. **nullable** - 是否允许 NULL
-6. **server_default** - 数据库级别的默认值
-7. **func.now()** - 使用数据库的当前时间函数
-8. **onupdate** - 更新时自动更新时间戳
+**Code Explanation**:
 
-创建 `src/models/__init__.py`：
+1. **__tablename__** - Specify table name
+2. **Column** - Define columns
+3. **primary_key** - Primary key
+4. **index** - Create index, speed up queries
+5. **nullable** - Whether NULL is allowed
+6. **server_default** - Database-level default value
+7. **func.now()** - Use database's current time function
+8. **onupdate** - Automatically update timestamp on update
+
+Create `src/models/__init__.py`:
 
 ```python
 """
-导出所有 ORM 模型
+Export all ORM models
 """
 from src.models.todo import Todo, TodoStatus, TodoPriority
 
 __all__ = ["Todo", "TodoStatus", "TodoPriority"]
 ```
 
-### Step 3: 创建数据库服务层（40 分钟）⭐ 核心
+### Step 3: Create Database Service Layer (40 minutes) ⭐ Core
 
-创建 `src/services/todo_service.py`：
+Create `src/services/todo_service.py`:
 
 ```python
 """
-Todo 业务逻辑层
-处理所有 Todo 相关的数据库操作
+Todo Business Logic Layer
+Handle all Todo-related database operations
 """
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -241,19 +248,19 @@ from src.schemas.todo import TodoCreate, TodoUpdate
 
 
 class TodoService:
-    """Todo 服务类"""
-    
+    """Todo Service Class"""
+
     @staticmethod
     def create_todo(db: Session, todo: TodoCreate) -> Todo:
         """
-        创建新的 Todo
-        
+        Create new Todo
+
         Args:
-            db: 数据库会话
-            todo: Todo 创建数据
-            
+            db: Database session
+            todo: Todo creation data
+
         Returns:
-            创建的 Todo 对象
+            Created Todo object
         """
         db_todo = Todo(
             title=todo.title,
@@ -261,27 +268,27 @@ class TodoService:
             priority=todo.priority,
             status=TodoStatus.PENDING
         )
-        
+
         db.add(db_todo)
         db.commit()
-        db.refresh(db_todo)  # 刷新以获取数据库生成的字段
-        
+        db.refresh(db_todo)  # Refresh to get database-generated fields
+
         return db_todo
-    
+
     @staticmethod
     def get_todo(db: Session, todo_id: int) -> Optional[Todo]:
         """
-        根据 ID 获取 Todo
-        
+        Get Todo by ID
+
         Args:
-            db: 数据库会话
+            db: Database session
             todo_id: Todo ID
-            
+
         Returns:
-            Todo 对象或 None
+            Todo object or None
         """
         return db.query(Todo).filter(Todo.id == todo_id).first()
-    
+
     @staticmethod
     def get_todos(
         db: Session,
@@ -291,29 +298,29 @@ class TodoService:
         limit: int = 100
     ) -> List[Todo]:
         """
-        获取 Todo 列表
-        
+        Get Todo list
+
         Args:
-            db: 数据库会话
-            status: 状态筛选
-            priority: 优先级筛选
-            skip: 跳过的记录数
-            limit: 返回的最大记录数
-            
+            db: Database session
+            status: Status filter
+            priority: Priority filter
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+
         Returns:
-            Todo 列表
+            Todo list
         """
         query = db.query(Todo)
-        
-        # 筛选
+
+        # Filters
         if status:
             query = query.filter(Todo.status == status)
         if priority:
             query = query.filter(Todo.priority == priority)
-        
-        # 分页
+
+        # Pagination
         return query.offset(skip).limit(limit).all()
-    
+
     @staticmethod
     def get_todos_count(
         db: Session,
@@ -321,25 +328,25 @@ class TodoService:
         priority: Optional[TodoPriority] = None
     ) -> int:
         """
-        获取 Todo 总数
-        
+        Get total number of Todos
+
         Args:
-            db: 数据库会话
-            status: 状态筛选
-            priority: 优先级筛选
-            
+            db: Database session
+            status: Status filter
+            priority: Priority filter
+
         Returns:
-            Todo 总数
+            Total number of Todos
         """
         query = db.query(Todo)
-        
+
         if status:
             query = query.filter(Todo.status == status)
         if priority:
             query = query.filter(Todo.priority == priority)
-        
+
         return query.count()
-    
+
     @staticmethod
     def update_todo(
         db: Session,
@@ -347,73 +354,74 @@ class TodoService:
         todo_update: TodoUpdate
     ) -> Optional[Todo]:
         """
-        更新 Todo
-        
+        Update Todo
+
         Args:
-            db: 数据库会话
+            db: Database session
             todo_id: Todo ID
-            todo_update: 更新数据
-            
+            todo_update: Update data
+
         Returns:
-            更新后的 Todo 对象或 None
+            Updated Todo object or None
         """
         db_todo = db.query(Todo).filter(Todo.id == todo_id).first()
-        
+
         if not db_todo:
             return None
-        
-        # 只更新提供的字段
+
+        # Only update provided fields
         update_data = todo_update.model_dump(exclude_unset=True)
-        
+
         for field, value in update_data.items():
             setattr(db_todo, field, value)
-        
+
         db.commit()
         db.refresh(db_todo)
-        
+
         return db_todo
-    
+
     @staticmethod
     def delete_todo(db: Session, todo_id: int) -> bool:
         """
-        删除 Todo
-        
+        Delete Todo
+
         Args:
-            db: 数据库会话
+            db: Database session
             todo_id: Todo ID
-            
+
         Returns:
-            是否删除成功
+            Whether deletion was successful
         """
         db_todo = db.query(Todo).filter(Todo.id == todo_id).first()
-        
+
         if not db_todo:
             return False
-        
+
         db.delete(db_todo)
         db.commit()
-        
+
         return True
 ```
 
-**代码讲解**：
-1. **静态方法** - 使用 `@staticmethod`，不需要实例化
-2. **db.add()** - 添加对象到会话
-3. **db.commit()** - 提交事务
-4. **db.refresh()** - 刷新对象，获取数据库生成的值
-5. **db.query()** - 创建查询
-6. **filter()** - 添加过滤条件
-7. **first()** - 获取第一条记录
-8. **all()** - 获取所有记录
-9. **count()** - 获取记录数
+**Code Explanation**:
 
-### Step 4: 更新 main.py 使用数据库（40 分钟）⭐ 核心
+1. **Static methods** - Use `@staticmethod`, no need to instantiate
+2. **db.add()** - Add object to session
+3. **db.commit()** - Commit transaction
+4. **db.refresh()** - Refresh object to get database-generated values
+5. **db.query()** - Create query
+6. **filter()** - Add filter conditions
+7. **first()** - Get first record
+8. **all()** - Get all records
+9. **count()** - Get record count
 
-更新 `src/main.py`：
+### Step 4: Update main.py to Use Database (40 minutes) ⭐ Core
+
+Update `src/main.py`:
 
 ```python
 """
-FastAPI TODO API 主应用
+FastAPI TODO API Main Application
 """
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -433,7 +441,7 @@ from src.services.todo_service import TodoService
 
 app = FastAPI(
     title="TODO API",
-    description="使用 SQLite 数据库的 TODO 管理 API",
+    description="TODO Management API using SQLite database",
     version="1.0.0",
 )
 
@@ -448,15 +456,15 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """应用启动事件 - 初始化数据库"""
+    """Application startup event - Initialize database"""
     init_db()
-    print("🚀 FastAPI 应用启动成功！")
-    print("📖 访问 http://localhost:8000/docs 查看 API 文档")
+    print("🚀 FastAPI application started successfully!")
+    print("📖 Visit http://localhost:8000/docs to view API documentation")
 
 
 @app.get("/")
 async def root():
-    """根路径"""
+    """Root path"""
     return {
         "message": "Welcome to TODO API with SQLite",
         "version": "1.0.0",
@@ -469,22 +477,22 @@ async def create_todo(
     todo: TodoCreate,
     db: Session = Depends(get_db)
 ):
-    """创建新的 TODO 任务"""
+    """Create new TODO task"""
     return TodoService.create_todo(db, todo)
 
 
 @app.get("/todos", response_model=TodoListResponse)
 async def get_todos(
-    status: Optional[TodoStatus] = Query(None, description="按状态筛选"),
-    priority: Optional[TodoPriority] = Query(None, description="按优先级筛选"),
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(100, ge=1, le=100, description="返回的最大记录数"),
+    status: Optional[TodoStatus] = Query(None, description="Filter by status"),
+    priority: Optional[TodoPriority] = Query(None, description="Filter by priority"),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=100, description="Maximum number of records to return"),
     db: Session = Depends(get_db)
 ):
-    """获取 TODO 列表"""
+    """Get TODO list"""
     todos = TodoService.get_todos(db, status, priority, skip, limit)
     total = TodoService.get_todos_count(db, status, priority)
-    
+
     return {
         "todos": todos,
         "total": total
@@ -496,15 +504,15 @@ async def get_todo(
     todo_id: int,
     db: Session = Depends(get_db)
 ):
-    """获取单个 TODO 任务"""
+    """Get single TODO task"""
     todo = TodoService.get_todo(db, todo_id)
-    
+
     if not todo:
         raise HTTPException(
             status_code=404,
             detail=f"Todo with id {todo_id} not found"
         )
-    
+
     return todo
 
 
@@ -514,15 +522,15 @@ async def update_todo(
     todo_update: TodoUpdate,
     db: Session = Depends(get_db)
 ):
-    """更新 TODO 任务"""
+    """Update TODO task"""
     todo = TodoService.update_todo(db, todo_id, todo_update)
-    
+
     if not todo:
         raise HTTPException(
             status_code=404,
             detail=f"Todo with id {todo_id} not found"
         )
-    
+
     return todo
 
 
@@ -531,137 +539,148 @@ async def delete_todo(
     todo_id: int,
     db: Session = Depends(get_db)
 ):
-    """删除 TODO 任务"""
+    """Delete TODO task"""
     success = TodoService.delete_todo(db, todo_id)
-    
+
     if not success:
         raise HTTPException(
             status_code=404,
             detail=f"Todo with id {todo_id} not found"
         )
-    
+
     return {"message": "Todo deleted successfully"}
 ```
 
-**代码讲解**：
-1. **Depends(get_db)** - 依赖注入，自动管理数据库会话
-2. **startup_event** - 应用启动时初始化数据库
-3. **TodoService** - 使用服务层处理业务逻辑
-4. **分离关注点** - 路由层只处理 HTTP，业务逻辑在服务层
+**Code Explanation**:
 
-### Step 5: 测试数据库功能（20 分钟）
+1. **Depends(get_db)** - Dependency injection, automatically manages database session
+2. **startup_event** - Initialize database on application startup
+3. **TodoService** - Use service layer to handle business logic
+4. **Separation of concerns** - Route layer only handles HTTP, business logic in service layer
+
+### Step 5: Test Database Functionality (20 minutes)
 
 ```bash
-# 1. 启动应用（会自动创建数据库）
+# 1. Start application (will automatically create database)
 uvicorn src.main:app --reload
 
-# 2. 创建 Todo
+# 2. Create Todo
 curl -X POST "http://localhost:8000/todos" \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "学习 SQLAlchemy",
-    "description": "完成 ORM 教程",
+    "title": "Learn SQLAlchemy",
+    "description": "Complete ORM tutorial",
     "priority": "high"
   }'
 
-# 3. 获取所有 Todo
+# 3. Get all Todos
 curl "http://localhost:8000/todos"
 
-# 4. 更新 Todo
+# 4. Update Todo
 curl -X PUT "http://localhost:8000/todos/1" \
   -H "Content-Type: application/json" \
   -d '{"status": "done"}'
 
-# 5. 查看数据库文件
+# 5. View database file
 ls -lh todo.db
 
-# 6. 使用 SQLite 命令行查看数据
+# 6. Use SQLite command line to view data
 sqlite3 todo.db "SELECT * FROM todos;"
 ```
 
 ---
 
-## ✅ 今日成果检查
+## ✅ Today's Achievements Check
 
-### 文件清单
-- [x] `src/database/base.py` - Base 模型
-- [x] `src/database/connection.py` - 数据库连接
-- [x] `src/models/todo.py` - ORM 模型
-- [x] `src/services/todo_service.py` - 业务逻辑
-- [x] 更新的 `src/main.py` - 使用数据库的 API
-- [x] `todo.db` - SQLite 数据库文件（自动生成）
+### File Checklist
 
-### 功能验证
+- [x] `src/database/base.py` - Base model
+- [x] `src/database/connection.py` - Database connection
+- [x] `src/models/todo.py` - ORM model
+- [x] `src/services/todo_service.py` - Business logic
+- [x] Updated `src/main.py` - API using database
+- [x] `todo.db` - SQLite database file (auto-generated)
+
+### Function Verification
+
 ```bash
-# 1. 启动应用
+# 1. Start application
 uvicorn src.main:app --reload
 
-# 2. 创建数据
+# 2. Create data
 curl -X POST "http://localhost:8000/todos" \
   -H "Content-Type: application/json" \
-  -d '{"title":"测试数据库","priority":"high"}'
+  -d '{"title":"Test database","priority":"high"}'
 
-# 3. 重启应用，数据应该还在
-# Ctrl+C 停止，然后重新启动
+# 3. Restart application, data should still be there
+# Ctrl+C to stop, then restart
 uvicorn src.main:app --reload
 
-# 4. 再次获取数据
+# 4. Get data again
 curl "http://localhost:8000/todos"
 ```
 
-### 学习收获
-- [x] 理解 ORM 概念
-- [x] 学会配置 SQLAlchemy
-- [x] 掌握创建 ORM 模型
-- [x] 学会使用依赖注入管理数据库会话
-- [x] 理解服务层模式
-- [x] 掌握基本的 SQLAlchemy 查询
+### Learning Outcomes
+
+- [x] Understand ORM concepts
+- [x] Learn to configure SQLAlchemy
+- [x] Master creating ORM models
+- [x] Learn to use dependency injection to manage database sessions
+- [x] Understand service layer pattern
+- [x] Master basic SQLAlchemy queries
 
 ---
 
-## 💡 常见问题
+## 💡 Common Questions
 
-### Q1: ORM 和直接写 SQL 有什么区别？
-**A**: ORM 用对象操作，更安全、更易维护。直接 SQL 更灵活，但容易出错。
+### Q1: What's the difference between ORM and writing SQL directly?
 
-### Q2: 为什么要用依赖注入？
-**A**: 自动管理资源生命周期，确保数据库会话正确关闭，避免内存泄漏。
+**A**: ORM uses object operations, safer and easier to maintain. Direct SQL is more flexible but error-prone.
 
-### Q3: 数据库文件在哪里？
-**A**: 项目根目录的 `todo.db` 文件。
+### Q2: Why use dependency injection?
 
-### Q4: 如何查看生成的 SQL？
-**A**: 在 `create_engine` 中设置 `echo=True`。
+**A**: Automatically manages resource lifecycle, ensures database sessions are properly closed, avoids memory leaks.
 
-### Q5: 如何重置数据库？
-**A**: 删除 `todo.db` 文件，重启应用会自动重新创建。
+### Q3: Where is the database file?
 
----
+**A**: The `todo.db` file in the project root directory.
 
-## 📝 今日总结
+### Q4: How to view generated SQL?
 
-在 Day 3，你完成了：
-1. ✅ 配置了 SQLAlchemy 数据库连接
-2. ✅ 创建了 ORM 模型
-3. ✅ 实现了服务层
-4. ✅ 学会了依赖注入
-5. ✅ 实现了数据持久化
+**A**: Set `echo=True` in `create_engine`.
 
-**明天预告（Day 4）**：
-- 完善所有 CRUD 操作
-- 优化查询性能
-- 添加更多业务逻辑
-- 实现高级筛选功能
+### Q5: How to reset the database?
+
+**A**: Delete the `todo.db` file, restarting the application will automatically recreate it.
 
 ---
 
-## 🎯 作业（可选）
+## 📝 Today's Summary
 
-1. **添加索引**: 为常用查询字段添加索引
-2. **添加关系**: 学习 SQLAlchemy 的关系映射（一对多、多对多）
-3. **查看数据库**: 使用 SQLite Browser 查看数据库结构
-4. **性能测试**: 创建 1000 条数据，测试查询性能
+In Day 3, you completed:
+
+1. ✅ Configured SQLAlchemy database connection
+2. ✅ Created ORM models
+3. ✅ Implemented service layer
+4. ✅ Learned dependency injection
+5. ✅ Implemented data persistence
+
+**Tomorrow's Preview (Day 4)**:
+
+- Complete all CRUD operations
+- Optimize query performance
+- Add more business logic
+- Implement advanced filtering features
 
 ---
 
-**恭喜完成 Day 3！数据库集成完成！** 🎉
+## 🎯 Homework (Optional)
+
+1. **Add Indexes**: Add indexes for frequently queried fields
+2. **Add Relationships**: Learn SQLAlchemy relationship mapping (one-to-many, many-to-many)
+3. **View Database**: Use SQLite Browser to view database structure
+4. **Performance Testing**: Create 1000 records, test query performance
+
+---
+
+**Congratulations on completing Day 3! Database integration complete!** 🎉
