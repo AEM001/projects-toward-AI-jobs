@@ -25,90 +25,6 @@
 
 ### Step 1: Optimize Swagger Documentation (40 minutes) ⭐ Core
 
-Update `src/main.py` to enhance API documentation:
-
-```python
-"""
-FastAPI TODO API - Complete Version
-"""
-from fastapi import FastAPI, HTTPException, Query, Depends, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from sqlalchemy.orm import Session
-from typing import Optional
-import math
-
-from src.database.connection import get_db, init_db
-from src.schemas.todo import *
-from src.services.todo_service import TodoService
-from src.utils.logger import logger
-from src.utils.middleware import RequestLoggingMiddleware
-from src.utils.exceptions import TodoNotFoundException, DatabaseException
-
-# API Metadata
-tags_metadata = [
-    {
-        "name": "Root",
-        "description": "Root path and health check endpoints",
-    },
-    {
-        "name": "Todos",
-        "description": "TODO task management operations. Including create, read, update, delete tasks.",
-    },
-    {
-        "name": "Health",
-        "description": "Application health check endpoints",
-    },
-]
-
-app = FastAPI(
-    title="FastAPI TODO API",
-    description="""
-    ## Features
-    
-    This is a complete RESTful TODO management API that provides the following features:
-    
-    * **CRUD Operations** - Create, read, update, delete tasks
-    * **Data Validation** - Automatic request data validation
-    * **Data Persistence** - SQLite database storage
-    * **Search and Filter** - Search tasks by status, priority
-    * **Pagination Support** - Paginated queries for large data
-    * **Statistics** - Task statistics and reports
-    * **Batch Operations** - Batch delete tasks
-    
-    ## Tech Stack
-    
-    * **FastAPI** - Modern high-performance web framework
-    * **SQLAlchemy** - Python ORM
-    * **Pydantic** - Data validation
-    * **SQLite** - Lightweight database
-    
-    ## Quick Start
-    
-    1. Create task: POST /todos
-    2. View tasks: GET /todos
-    3. Update task: PUT /todos/{id}
-    4. Delete task: DELETE /todos/{id}
-    """,
-    version="1.0.0",
-    contact={
-        "name": "API Support",
-        "email": "support@example.com",
-    },
-    license_info={
-        "name": "MIT",
-        "url": "https://opensource.org/licenses/MIT",
-    },
-    openapi_tags=tags_metadata,
-)
-
-# Add middleware...
-# (Keep previous middleware configuration)
-
-# Route endpoints...
-# (Keep previous routes, add more detailed docstrings)
-```
 
 ### Step 2: Create API Design Documentation (30 minutes)
 
@@ -469,26 +385,6 @@ git push heroku main
 
 ### Step 4: Code Optimization and Refactoring (30 minutes)
 
-Create `src/utils/__init__.py`:
-
-```python
-"""
-Utility module exports
-"""
-from src.utils.logger import logger
-from src.utils.exceptions import (
-    TodoNotFoundException,
-    TodoValidationException,
-    DatabaseException
-)
-
-__all__ = [
-    "logger",
-    "TodoNotFoundException",
-    "TodoValidationException",
-    "DatabaseException"
-]
-```
 
 Update `requirements.txt`, add production environment dependencies:
 
