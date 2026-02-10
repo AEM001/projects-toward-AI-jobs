@@ -1,21 +1,63 @@
 from sqlalchemy.orm import Session
 from schemas import TodoCreate, TodoUpdate
 from db import TodoDB
+from datetime import datetime,date,timedelta
 import logging
 logger = logging.getLogger("fastapi_todo.crud")
 
+def format_datetime(dt: datetime | None) -> str | None:
+    """Format datetime to string without seconds"""
+    if dt is None:
+        return None
+    return dt.strftime("%Y-%m-%d %H:%M")
+
 def create_todo(db: Session, todo: TodoCreate) -> TodoDB:
     logger.info(f"Creating todo with title:{todo.title}")
-    db_todo = TodoDB(title=todo.title, done=False)
+    
+    # Handle ddl field
+    ddl_datetime = None
+    if todo.ddl:
+        try:
+            ddl_datetime = datetime.strptime(todo.ddl, "%Y-%m-%d %H:%M")
+        except ValueError:
+            logger.warning(f"Invalid ddl format: {todo.ddl}, using default")
+    
+    db_todo = TodoDB(title=todo.title, done=False, ddl=ddl_datetime)
     db.add(db_todo)
     db.flush()          # 让 id 生成，但不提交（提交由 get_db_tx 做）
     db.refresh(db_todo)
     logger.debug(f"Todo created successfully in database with id:{db_todo.id}")
     return db_todo
 
-def list_todos(db: Session) -> list[TodoDB]:
-    logger.debug("Listing all todos")
-    return db.query(TodoDB).order_by(TodoDB.id.asc()).all()
+def list_todos(db: Session,skip:int=0,limit:int=10,title:str|None=None,filter_today:bool=True,filter_week:bool=False,
+               sort_by: str = "ddl", sort_order: str = "asc") -> tuple[list[TodoDB],int]:
+
+    logger.debug(f"Listing all todos with pagination: skip={skip}, limit={limit},title={title},filter_today={filter_today},filter_week={filter_week},sort_by={sort_by},sort_order={sort_order}")
+    query=db.query(TodoDB)
+    if title:
+        query=query.filter(TodoDB.title.ilike(f"%{title}%"))
+    if filter_today:
+        today = date.today()
+        query = query.filter(TodoDB.ddl >= datetime.combine(today, datetime.min.time()),
+                           TodoDB.ddl < datetime.combine(today + timedelta(days=1), datetime.min.time()))
+    if filter_week:
+        today = date.today()
+        week_end = today + timedelta(days=7)
+        query = query.filter(TodoDB.ddl <= datetime.combine(week_end, datetime.max.time()))
+    
+    total=query.count()
+    sort_column=getattr(TodoDB,sort_by)
+    if sort_order == "desc":
+        sort_column = sort_column.desc()
+    else:
+        sort_column = sort_column.asc()
+    
+    # Handle nulls for ddl column (put nulls last)
+    if sort_by == "ddl":
+        sort_column = sort_column.nulls_last()
+    todos=query.order_by(sort_column).offset(skip).limit(limit).all()
+    logger.debug(f"found{len(todos)}todos out of {total}total")
+    return todos,total
 
 def get_todo(db: Session, id: int) -> TodoDB | None:
     """获取单个 Todo，不存在返回 None"""
@@ -31,6 +73,17 @@ def update_todo(db: Session, todo: TodoDB, update: TodoUpdate) -> TodoDB:
     if update.done is not None:
         logger.debug(f"Updating done status to: {update.done}")
         todo.done = update.done
+    if update.ddl is not None:
+        if update.ddl == "":
+            logger.debug("Clearing ddl")
+            todo.ddl = None
+        else:
+            try:
+                ddl_datetime = datetime.strptime(update.ddl, "%Y-%m-%d %H:%M")
+                todo.ddl = ddl_datetime
+                logger.debug(f"Updating ddl to: {update.ddl}")
+            except ValueError:
+                logger.warning(f"Invalid ddl format: {update.ddl}, keeping current value")
 
     db.flush()
     db.refresh(todo)

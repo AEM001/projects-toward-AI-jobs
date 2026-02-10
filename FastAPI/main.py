@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from db import SessionLocal
-from schemas import TodoCreate, Todo, TodoUpdate
+from schemas import TodoCreate, Todo, TodoUpdate,TodoListResponse ,PaginationParams
 from log_config import setup_logging, get_request_logger
 from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
 import services
+from config import settings
 
 tags_metadata = [
     {
@@ -25,69 +26,33 @@ tags_metadata = [
 ]
 
 
-app = FastAPI(title="Simple Todo API",
-description="""
- A production-ready TODO management API built with FastAPI.
-    
-    ## Features
-    
-    * **CRUD Operations**: Create, read, update, delete tasks
-    * **Data Validation**: Automatic validation with Pydantic
-    * **Logging**: Comprehensive logging across all layers
-    * **Error Handling**: Proper error responses and exception handling
-    * **Request Validation**: Content-type and size validation
-    * **API Versioning**: Versioned endpoints at `/api/v1/*`
-    
-    ## Getting Started
-    
-    1. Create a task: `POST /todos` or `POST /api/v1/todos`
-    2. List tasks: `GET /todos` or `GET /api/v1/todos`
-    3. Update a task: `PUT /todos/{id}` or `PUT /api/v1/todos/{id}`
-    4. Delete a task: `DELETE /todos/{id}` or `DELETE /api/v1/todos/{id}`
-    """,
-    version="1.0.0",
+app = FastAPI(
+    title=settings.api_title,
+    description=settings.api_description,
+    version=settings.api_version,
     contact={
-        "name": "Albert",
-        "email": "transcendence0915@gmail.com"
-    },
+            "name": "Albert",
+            "email": "transcendence0915@gmail.com"
+        },
     license_info={
         "name": "MIT",
         "url": "https://opensource.org/licenses/MIT"
     },
     openapi_tags=tags_metadata
 )
-logger = setup_logging(level="DEBUG", log_to_file=True)
-request_logger = get_request_logger()
 
-class RequestValidationMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Validate Content-Type for POST/PUT requests
-        if request.method in ["POST", "PUT"]:
-            content_type = request.headers.get("content-type", "")
-            if not content_type.startswith("application/json"):
-                logger.warning(f"Invalid Content-Type: {content_type}")
-                raise HTTPException(
-                    status_code=400,
-                    detail="Content-Type must be application/json"
-                )
-
-        # Check request body size (limit to 1MB)
-        body = await request.body()
-        if len(body) > 1024 * 1024:  # 1MB limit
-            logger.warning(f"Request body too large: {len(body)} bytes")
-            raise HTTPException(
-                status_code=413,
-                detail="Request body too large (max 1MB)"
-            )
-
-        response = await call_next(request)
-        return response
-
-
+from fastapi.middleware.cors import CORSMiddleware
 # Add middleware after app creation
-app.add_middleware(RequestValidationMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cor_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cor_allow_headers,
+)
 
-
+logger = setup_logging(level="DEBUG" if settings.debug_mode else "INFO", log_to_file=True)
+request_logger = get_request_logger()
 # Create v1 router for API versioning
 router = APIRouter()
 
@@ -178,31 +143,47 @@ The task will be created with a default status of 'pending' and current timestam
 def create_todo(todo: TodoCreate, db: Session = Depends(get_db_tx)):
     return services.create_todo_service(db, todo)
 
-@router.get("/todos", response_model=list[Todo],tags=["Todos"],summary="List all TODO tasks",
-description="""
-Retrieve a list of all TODO tasks in the system.
+@router.get("/todos", response_model=TodoListResponse, tags=["Todos"], 
+           summary="List all TODO tasks with pagination and filtering",
+           description="""
+Retrieve a paginated list of all TODO tasks in the system with optional filtering.
  
-Returns all tasks ordered by creation date.
+**Query Parameters:**
+- `skip`: Number of items to skip (default: 0)
+- `limit`: Maximum number of items to return (default: 10, max: 100)
+- `title`: Search by title (partial match)
+- `filter_today`: Show only todos due today (default: false)
+- `filter_week`: Show only todos due within the next 7 days (default: false)
+ 
+**Returns:** Paginated list with metadata including total count, current page, etc.
 """,
 responses={
-             200: {
-                 "description": "List of todos",
-                 "content": {
-                     "application/json": {
-                         "example": [
-                             {
-                                 "id": 1,
-                                 "title": "Learn FastAPI",
-                                 "status": "pending"
-                             }
-                         ]
-                     }
-                 }
-             }
-         }
-)
-def list_todos(db: Session = Depends(get_db)):
-    return services.list_todos_service(db)
+    200: {
+        "description": "Paginated and filtered list of todos",
+        "content": {
+            "application/json": {
+                "example": {
+                    "items": [
+                        {"id": 1, "title": "Buy groceries", "ddl": "2026-02-10 12:00", "done": False}
+                    ],
+                    "total": 5,
+                    "skip": 0,
+                    "limit": 10,
+                    "page": 0,
+                    "pages": 1
+                }
+            }
+        }
+    }
+})
+def list_todos(Pagination: PaginationParams=Depends(),db: Session = Depends(get_db)):
+    return services.list_todos_service(
+        db,skip=Pagination.skip,limit=Pagination.limit,
+        title=Pagination.title,
+        filter_today=Pagination.filter_today,
+        filter_week=Pagination.filter_week,
+        sort_by=Pagination.sort_by.value,
+        sort_order=Pagination.sort_order.value)
 
 @router.get("/todos/{id}", response_model=Todo,tags=["Todos"],summary="Get a specific TODO task",
  description="""
@@ -337,7 +318,6 @@ def tx_atomic(db: Session = Depends(get_db_tx)):
     return services.test_tx_atomic_service(db)
 
 app.include_router(router)
-app.include_router(router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():

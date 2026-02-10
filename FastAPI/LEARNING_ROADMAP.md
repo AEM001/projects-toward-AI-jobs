@@ -49,13 +49,13 @@
 ### **Week 2: Production Features** (10-12 hours)
 
 #### Day 1-3: Pagination & Filtering (4-5 hours)
-- [ ] **Add pagination to `/todos` endpoint**
+- [x] **Add pagination to `/todos` endpoint**
   - Query parameters: `skip`, `limit`
   - Return metadata: `total`, `page`, `page_size`
-- [ ] **Add filtering capabilities**
+- [x] **Add filtering capabilities**
   - Filter by `done` status
   - Search by `title` (partial match)
-- [ ] **Add sorting**
+- [x] **Add sorting**
   - Sort by `id`, `title`, `done`
   - Support ascending/descending order
 
@@ -234,9 +234,5 @@ By the end of this roadmap, you should be able to:
 7. **Build something you care about** - After Week 4, customize the project to your interests
 
 ---
-
-## 🚀 Next Immediate Action
-
-**Start here:** Fix the duplicate `get_todo` function in `crud.py` line 46, then add basic logging to all CRUD operations.
 
 Good luck! 🎯
