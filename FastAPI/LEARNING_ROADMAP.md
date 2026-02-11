@@ -60,14 +60,14 @@
   - Support ascending/descending order
 
 #### Day 4-5: Configuration & Environment (3-4 hours)
-- [ ] **Create `config.py`** using Pydantic Settings
+- [x] **Create `config.py`** using Pydantic Settings
   - Database URL from environment variables
   - API settings (title, version, debug mode)
   - CORS settings
-- [ ] **Add `.env` file support**
+- [x] **Add `.env` file support**
   - Install `python-dotenv`
   - Separate dev/prod configurations
-- [ ] **Add CORS middleware** (if building frontend)
+- [x] **Add CORS middleware** (if building frontend)
 
 #### Day 6-7: Rate Limiting & Security (3-4 hours)
 - [ ] **Add rate limiting** using `slowapi`
