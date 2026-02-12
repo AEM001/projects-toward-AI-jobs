@@ -1,14 +1,60 @@
 from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from db import SessionLocal
-from schemas import TodoCreate, Todo, TodoUpdate,TodoListResponse ,PaginationParams
+from db import SessionLocal,UserDB
+from schemas import TodoCreate, Todo, TodoUpdate,TodoListResponse ,PaginationParams,UserCreate,UserLogin,User,Token,TokenData
 from log_config import setup_logging, get_request_logger
 from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
 import services
 from config import settings
+
+
+from passlib.context import CryptContext
+from jose import JWTError,jwt
+from datetime import datetime, timedelta
+
+#
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security=HTTPBearer()
+
+SECRET_KEY=settings.secret_key
+ALGORITHM=settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES=settings.access_token_expire_minutes
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def get_user(db: Session, email: str):
+    return db.query(UserDB).filter(UserDB.email == email).first()
+
+def authenticate_user(db: Session, email: str, password: str):
+    user = get_user(db, email)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+
+
+
 
 tags_metadata = [
     {
@@ -46,9 +92,9 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=settings.cor_allow_credentials,
+    allow_credentials=settings.cors_allow_credentials,
     allow_methods=settings.cors_allow_methods,
-    allow_headers=settings.cor_allow_headers,
+    allow_headers=settings.cors_allow_headers,
 )
 
 logger = setup_logging(level="DEBUG" if settings.debug_mode else "INFO", log_to_file=True)
@@ -112,6 +158,29 @@ def get_db_tx():
     finally:
         db.close()
 
+async def get_current_user(credentials:HTTPAuthorizationCredentials=Depends(security),db:Session=Depends(get_db)):
+    credentials_exception=HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate":"Bearer"},
+    )
+    try:
+        token=credentials.credentials
+        payload=jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
+        email:str=payload.get("sub")
+        if email is None:
+            raise credentials_exception
+
+        token_data=TokenData(email=email)
+    except JWTError:
+        raise credentials_exception
+    
+    user=get_user(db,email=token_data.email)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
 @router.post("/todos", 
           response_model=Todo, 
           status_code=201, 
@@ -121,27 +190,10 @@ def get_db_tx():
 Create a new TODO task with the provided information.
 
 The task will be created with a default status of 'pending' and current timestamp."""
-# """",
-#           responses={
-#               201: {
-#                   "description": "Todo created successfully",
-#                   "content": {
-#                       "application/json": {
-#                           "example": {
-#                               "id": 1,
-#                               "title": "Learn FastAPI",
-#                               "description": "Complete the tutorial",
-#                               "status": "pending",
-#                               "created_at": "2024-01-01T12:00:00",
-#                               "updated_at": "2024-01-01T12:00:00"
-#                           }
-#                       }
-#                   }
-#               },
-#               422: {"description": "Validation error"}}
           )
-def create_todo(todo: TodoCreate, db: Session = Depends(get_db_tx)):
-    return services.create_todo_service(db, todo)
+def create_todo(todo: TodoCreate,current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
+    return services.create_todo_service(db, todo,current_user.id)
+
 
 @router.get("/todos", response_model=TodoListResponse, tags=["Todos"], 
            summary="List all TODO tasks with pagination and filtering",
@@ -156,34 +208,36 @@ Retrieve a paginated list of all TODO tasks in the system with optional filterin
 - `filter_week`: Show only todos due within the next 7 days (default: false)
  
 **Returns:** Paginated list with metadata including total count, current page, etc.
-""",
-responses={
-    200: {
-        "description": "Paginated and filtered list of todos",
-        "content": {
-            "application/json": {
-                "example": {
-                    "items": [
-                        {"id": 1, "title": "Buy groceries", "ddl": "2026-02-10 12:00", "done": False}
-                    ],
-                    "total": 5,
-                    "skip": 0,
-                    "limit": 10,
-                    "page": 0,
-                    "pages": 1
-                }
-            }
-        }
-    }
-})
-def list_todos(Pagination: PaginationParams=Depends(),db: Session = Depends(get_db)):
+"""
+# responses={
+#     200: {
+#         "description": "Paginated and filtered list of todos",
+#         "content": {
+#             "application/json": {
+#                 "example": {
+#                     "items": [
+#                         {"id": 1, "title": "Buy groceries", "ddl": "2026-02-10 12:00", "done": False}
+#                     ],
+#                     "total": 5,
+#                     "skip": 0,
+#                     "limit": 10,
+#                     "page": 0,
+#                     "pages": 1
+#                 }
+#             }
+#         }
+#     }
+# }
+)
+def list_todos(Pagination: PaginationParams=Depends(),current_user:User=Depends(get_current_user),db: Session = Depends(get_db)):
     return services.list_todos_service(
         db,skip=Pagination.skip,limit=Pagination.limit,
         title=Pagination.title,
         filter_today=Pagination.filter_today,
         filter_week=Pagination.filter_week,
         sort_by=Pagination.sort_by.value,
-        sort_order=Pagination.sort_order.value)
+        sort_order=Pagination.sort_order.value,
+        user_id=current_user.id)
 
 @router.get("/todos/{id}", response_model=Todo,tags=["Todos"],summary="Get a specific TODO task",
  description="""
@@ -219,8 +273,8 @@ Retrieve a single TODO task by its unique identifier.
                  }
              }
          })
-def get_todo(id: int, db: Session = Depends(get_db)):
-    return services.get_todo_service(db, id)
+def get_todo(id: int, db: Session = Depends(get_db),current_user:User=Depends(get_current_user)):
+    return services.get_todo_service(db, id,current_user.id)
 
 @router.put("/todos/{id}", response_model=Todo, tags=["Todos"], summary="Update an existing TODO task",
 description="""
@@ -259,8 +313,8 @@ responses={
         }
     }
 })
-def update_todo(id: int, update: TodoUpdate, db: Session = Depends(get_db_tx)):
-    return services.update_todo_service(db, id, update)
+def update_todo(id: int, update: TodoUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_tx)):
+    return services.update_todo_service(db, id, update, current_user.id)
 
 @router.delete("/todos/{id}", status_code=204, tags=["Todos"], summary="Delete a TODO task",
 description="""
@@ -284,8 +338,8 @@ responses={
         }
     }
 })
-def delete_todo(id: int, db: Session = Depends(get_db_tx)):
-    services.delete_todo_service(db, id)
+def delete_todo(id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db_tx)):
+    services.delete_todo_service(db, id, current_user.id)
 
 
 # ========================================
@@ -322,3 +376,53 @@ app.include_router(router)
 @app.on_event("startup")
 async def startup_event():
     logger.info("application startup complete -database tables created")
+
+
+@app.post("/auth/register",response_model=User,tags=["Authentication"])
+def register(user:UserCreate,db:Session=Depends(get_db)):
+    db_user=get_user(db,user.email)
+    if db_user:
+        raise HTTPException(status_code=400,detail="Email has been registered")
+    
+    hashed_password=get_password_hash(user.password)
+    db_user=UserDB(email=user.email,hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+@app.post("/auth/login",response_model=Token, tags=["Authentication"])
+def login(user_credentials:UserLogin,db:Session=Depends(get_db)):
+    user=authenticate_user(db,user_credentials.email,user_credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate":"Bearer"}
+        )
+
+    
+    access_token_expires=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token=create_access_token(
+        data={"sub":user.email},
+        expires_delta=access_token_expires
+    )
+    return {"access_token":access_token,"token_type":"bearer"}
+
+@app.get("/auth/me",response_model=User,tags=["Authentication"])
+def get_current_user_info(credentials:HTTPAuthorizationCredentials=Depends(security),db:Session=Depends(get_db)):
+    token=credentials.credentials
+    try:
+        payload=jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
+        email:str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401,detail="Cound not validate credentials")
+        token_data=TokenData(email=email)
+    except JWTError:
+        raise HTTPException(status_code=401,detail="Could not validate credentials")
+
+    user=get_user(db,email=token_data.email)
+    if user is None:
+        raise HTTPException(status_code=404,detail="User not found")
+    return user
+

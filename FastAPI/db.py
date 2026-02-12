@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine,Column,Integer,String,Boolean,DateTime
+from sqlalchemy import create_engine,Column,Integer,String,Boolean,DateTime,ForeignKey
 from datetime import datetime, date, time, timedelta
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker,relationship
 from config import settings
+
 # engine
 DATABASE_URL=settings.database_url
 # SQLite特性需要指定check_same_thread=False
@@ -11,8 +12,10 @@ engine=create_engine(DATABASE_URL,connect_args={"check_same_thread":False})
 # create session class
 SessionLocal=sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
-# create base class
+# create base class 
 Base=declarative_base()
+
+
 
 def default_tomorrow_9pm():
     """Return tomorrow 9:00 PM as datetime"""
@@ -26,6 +29,14 @@ class TodoDB(Base):
     ddl=Column(DateTime, default=default_tomorrow_9pm)
     title=Column(String,index=True)
     done=Column(Boolean,default=False)
+    owner_id=Column(Integer,ForeignKey("users.id"))
+    owner=relationship("UserDB",back_populates="todos")
 
+class UserDB(Base):
+    __tablename__="users"
+    id=Column(Integer,primary_key=True,index=True)
+    email=Column(String,unique=True,nullable=False)
+    hashed_password=Column(String,nullable=False)
+    todos=relationship("TodoDB",back_populates="owner")
 # create table
 Base.metadata.create_all(bind=engine)

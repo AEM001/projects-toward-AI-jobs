@@ -49,10 +49,31 @@ class Todo(BaseModel):
     ddl:str
     title:str
     done:bool
+    owner_id:int
 
 class TodoUpdate(BaseModel):
     ddl:str| None=Field(default=None, description="更新任务ddl，留空则不修改，格式: 'YYYY-MM-DD HH:MM'", json_schema_extra={"example": "2024-02-11 21:00"})
     title:str| None=Field(default=None, description="更新任务标题，留空则不修改", json_schema_extra={"example": None})
     done:bool| None=Field(default=None, description="更新任务状态，留空则不修改", json_schema_extra={"example": None})
 
-# least cotribution
+#Authentication schemas
+class UserBase(BaseModel):
+    email:str=Field(description="User email address")
+
+class UserCreate(UserBase):
+    password:str=Field(min_length=6,description="User password")
+
+class UserLogin(UserBase):
+    password:str=Field(description="User password")
+
+class User(UserBase):
+    id :int
+
+    model_config=ConfigDict(from_attributes=True)
+
+class Token(BaseModel):
+    access_token:str=Field(description="JWT Access token")
+    token_type:str=Field(default="bearer",description="Token type")
+
+class TokenData(BaseModel):
+    email:str | None=Field(default=None,description="User email from token")

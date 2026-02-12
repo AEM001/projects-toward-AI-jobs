@@ -27,6 +27,9 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
- 
+    
+    access_token_expire_minutes:int=Field(default=60,description="Access token expire minutes")
+    secret_key: str = Field(..., min_length=32, description="Secret key for JWT (must be set via environment variable)")
+    algorithm:str=Field(default="HS256",description="Algorithm for JWT")
 # Create global settings instance
 settings = Settings()

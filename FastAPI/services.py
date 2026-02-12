@@ -13,23 +13,28 @@ from exceptions import TodoNotFoundException, TodoValidationException, DatabaseE
 logger=setup_logging(level="INFO",log_to_file=True)
 request_logger=get_request_logger()
 
-def create_todo_service(db: Session, todo: TodoCreate) -> Todo:
+def create_todo_service(db: Session, todo: TodoCreate,user_id:int) -> Todo:
     """创建 Todo - 业务层"""
-    logger.info(f"Creating todo with title:{todo.title}")
-    result=crud.create_todo(db,todo)
-    logger.info(f"Todo created successfully with id:{result.id}")
+    logger.info(f"Creating todo with title:{todo.title} for user:{user_id} ")
+    db_todo=TodoDB(title=todo.title,ddl=todo.parse_datatime(todo.ddl)if todo.ddl else None,owner_id=user_id)
+    db.add(db_todo)
+    db.commit()
+    db.refresh(db_todo)
+    logger.info(f"Todo created successfully with id:{db_todo.id}")
     
     # Convert to response model with formatted ddl
     return Todo(
-        id=result.id,
-        ddl=crud.format_datetime(result.ddl),
-        title=result.title,
-        done=result.done
+        id=db_todo.id,
+        ddl=crud.format_datetime(db_todo.ddl),
+        title=db_todo.title,
+        done=db_todo.done,
+        owner_id=db_todo.owner_id
     )
 
 
 def list_todos_service(
     db: Session,
+    user_id:int,
     skip:int=0,
     limit:int=10,
     title:str|None=None,
@@ -38,10 +43,10 @@ def list_todos_service(
     sort_by: str = "ddl",
     sort_order: str = "asc") -> TodoListResponse:
 
-    logger.info(f"--listing todos with filters and sorting:skip={skip},limit={limit},title={title},filter_today={filter_today},filter_week={filter_week},sort_by={sort_by},sort_order={sort_order}")
+    logger.info(f"--listing todos for user:{user_id} with filters and sorting:skip={skip},limit={limit},title={title},filter_today={filter_today},filter_week={filter_week},sort_by={sort_by},sort_order={sort_order}")
     # get paginated results and total count from CRUD
     todos,total=crud.list_todos(db,skip,limit,title=title,filter_today=filter_today,filter_week=filter_week,
-                               sort_by=sort_by, sort_order=sort_order)
+                               sort_by=sort_by, sort_order=sort_order, user_id=user_id)
     logger.info(f"listed {len(todos)} todos out of {total} total")
     
     page=skip//limit if limit>0 else 0
@@ -52,7 +57,8 @@ def list_todos_service(
             id=todo.id,
             ddl=crud.format_datetime(todo.ddl),
             title=todo.title,
-            done=todo.done
+            done=todo.done,
+            owner_id=todo.owner_id
         )
         for todo in todos
     ]
@@ -66,56 +72,76 @@ def list_todos_service(
     )
 
 
-def get_todo_service(db: Session, id: int) -> Todo:
-    """获取单个 Todo - 不存在则抛出 404"""
-    logger.info(f"--getting todo with id:{id}")
-    todo = crud.get_todo(db, id)
-    if todo is None:
-        logger.warning(f"todo with id:{id} not found")
-        raise TodoNotFoundException(id)
-    logger.info(f"Todo found: {todo.title}")
+def get_todo_service(db: Session, todo_id: int, user_id: int) -> Todo:
+    """获取单个 Todo - 业务层"""
+    logger.info(f"Getting todo with id:{todo_id} for user:{user_id}")
+    
+    # Get todo and verify ownership
+    db_todo = crud.get_todo(db, todo_id, user_id)
+    if not db_todo:
+        logger.warning(f"Todo with id:{todo_id} not found for user:{user_id}")
+        raise TodoNotFoundException(todo_id)
+    
+    logger.info(f"Todo retrieved successfully: {db_todo.title}")
     
     # Convert to response model with formatted ddl
     return Todo(
-        id=todo.id,
-        ddl=crud.format_datetime(todo.ddl),
-        title=todo.title,
-        done=todo.done
+        id=db_todo.id,
+        ddl=crud.format_datetime(db_todo.ddl),
+        title=db_todo.title,
+        done=db_todo.done,
+        owner_id=db_todo.owner_id
     )
 
 
-def update_todo_service(db: Session, id: int, update: TodoUpdate) -> Todo:
+def update_todo_service(db: Session, todo_id: int, update: TodoUpdate, user_id: int) -> Todo:
     """更新 Todo - 不存在则抛出 404"""
-    logger.info(f"updating todo with id:{id}")
-    todo = crud.get_todo(db, id)
-    if todo is None:
-        logger.warning(f"todo with id:{id} not found")
-        raise TodoNotFoundException(id)
-    result=crud.update_todo(db,todo,update)
-    logger.info(f"todo updated: id{id},title='{result.title}',done={result.done}")
+    logger.info(f"Updating todo with id:{todo_id} for user:{user_id}")
+    
+    # Get existing todo and verify ownership
+    existing_todo = crud.get_todo(db, todo_id, user_id)
+    if not existing_todo:
+        logger.warning(f"Todo with id:{todo_id} not found for user:{user_id}")
+        raise TodoNotFoundException(todo_id)
+    
+    result=crud.update_todo(db,todo_id,user_id,update)
+    if not result:
+        logger.error(f"Failed to update todo with id:{todo_id}")
+        raise DatabaseException("Failed to update todo")
+    
+    logger.info(f"Todo updated successfully: id:{todo_id}, title='{result.title}', done={result.done}")
     
     # Convert to response model with formatted ddl
     return Todo(
         id=result.id,
         ddl=crud.format_datetime(result.ddl),
         title=result.title,
-        done=result.done
+        done=result.done,
+        owner_id=result.owner_id
     )
 
 
-def delete_todo_service(db: Session, id: int) -> None:
-    """删除 Todo - 不存在则抛出 404"""
-    logger.info(f"deleting todo with id:{id}")
-    todo = crud.get_todo(db, id)
-    if todo is None:
-        logger.warning(f"todo with id:{id} not found")
-        raise TodoNotFoundException(id)
-    crud.delete_todo(db, todo)
-    logger.info(f"todo deleted successfully with id:{id}")
+def delete_todo_service(db: Session, todo_id: int, user_id: int) -> None:
+    """删除 Todo - 业务层"""
+    logger.info(f"Deleting todo with id:{todo_id} for user:{user_id}")
+    
+    # Get existing todo and verify ownership
+    existing_todo = crud.get_todo(db, todo_id, user_id)
+    if not existing_todo:
+        logger.warning(f"Todo with id:{todo_id} not found for user:{user_id}")
+        raise TodoNotFoundException(todo_id)
+    
+    # Delete todo
+    success = crud.delete_todo(db, todo_id, user_id)
+    if not success:
+        logger.error(f"Failed to delete todo with id:{todo_id}")
+        raise DatabaseException("Failed to delete todo")
+    
+    logger.info(f"Todo deleted successfully: {existing_todo.title}")
 
 
 # ========================================
-# 🔬 调试和实验服务
+# 调试和实验服务
 # ========================================
 
 def test_tx_fail_service(db: Session) -> None:
