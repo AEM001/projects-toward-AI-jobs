@@ -18,7 +18,7 @@
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/Mac/code/project/obsidian-plan-server</string>
+  <string>/Users/Mac/code/project/obsidian-widget</string>
 
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
