@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter
+from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -15,6 +15,33 @@ from config import settings
 from passlib.context import CryptContext
 from jose import JWTError,jwt
 from datetime import datetime, timedelta
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
+from collections import defaultdict
+
+limiter=Limiter(key_func=get_remote_address)
+
+# use redis in production
+failed_attempts=defaultdict(list)
+BLOCK_DURATION=timedelta(minutes=15)
+MAX_FAILED_ATTEMPTS=5
+
+
+def is_ip_blocked(client_ip: str) -> bool:
+    now = datetime.utcnow()
+    attempts = failed_attempts.get(client_ip, [])
+
+    # remove old attempts
+    recent_attempts = [attempt for attempt in attempts if now - attempt < BLOCK_DURATION]
+    failed_attempts[client_ip] = recent_attempts
+
+    return len(recent_attempts) >= MAX_FAILED_ATTEMPTS
+
+def record_failed_attempt(client_ip: str):
+    failed_attempts[client_ip].append(datetime.utcnow())
 
 #
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -53,9 +80,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 
-
-
-
 tags_metadata = [
     {
         "name": "Todos",
@@ -87,6 +111,12 @@ app = FastAPI(
     openapi_tags=tags_metadata
 )
 
+app.state.limiter=limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+
+
 from fastapi.middleware.cors import CORSMiddleware
 # Add middleware after app creation
 app.add_middleware(
@@ -110,6 +140,38 @@ async def log_requests(request, call_next):
     request_logger.info(f"Response:{response.status_code}")
     return response
 
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+# security headers
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    
+    return response
+
+# Add trusted host middleware for production
+if not settings.debug_mode:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["yourdomain.com", "www.yourdomain.com"]  # Replace with your actual domains
+    )
+
+
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+# Add this after your other middleware
+if not settings.debug_mode:
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 @app.exception_handler(TodoNotFoundException)
 async def todo_not_found_handler(request, exc):
@@ -191,7 +253,8 @@ Create a new TODO task with the provided information.
 
 The task will be created with a default status of 'pending' and current timestamp."""
           )
-def create_todo(todo: TodoCreate,current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
+@limiter.limit("20/minute")
+def create_todo(request: Request, todo: TodoCreate,current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
     return services.create_todo_service(db, todo,current_user.id)
 
 
@@ -229,7 +292,8 @@ Retrieve a paginated list of all TODO tasks in the system with optional filterin
 #     }
 # }
 )
-def list_todos(Pagination: PaginationParams=Depends(),current_user:User=Depends(get_current_user),db: Session = Depends(get_db)):
+@limiter.limit("100/minute")
+def list_todos(request: Request, Pagination: PaginationParams=Depends(),current_user:User=Depends(get_current_user),db: Session = Depends(get_db)):
     return services.list_todos_service(
         db,skip=Pagination.skip,limit=Pagination.limit,
         title=Pagination.title,
@@ -392,15 +456,25 @@ def register(user:UserCreate,db:Session=Depends(get_db)):
     return db_user
 
 @app.post("/auth/login",response_model=Token, tags=["Authentication"])
-def login(user_credentials:UserLogin,db:Session=Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request:Request,user_credentials:UserLogin,db:Session=Depends(get_db)):
+    client_ip=get_remote_address(request)
+    if is_ip_blocked(client_ip):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed attempts"
+        )
     user=authenticate_user(db,user_credentials.email,user_credentials.password)
     if not user:
+        record_failed_attempt(client_ip)
         raise HTTPException(
             status_code=401,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate":"Bearer"}
         )
 
+    if client_ip in failed_attempts:
+        del failed_attempts[client_ip]
     
     access_token_expires=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token=create_access_token(

@@ -70,13 +70,13 @@
 - [x] **Add CORS middleware** (if building frontend)
 
 #### Day 6-7: Rate Limiting & Security (3-4 hours)
-- [ ] **Add rate limiting** using `slowapi`
+- [x] **Add rate limiting** using `slowapi`
   - Limit requests per IP
   - Different limits for different endpoints
-- [ ] **Add security headers**
+- [x] **Add security headers**
   - HTTPS redirect in production
   - Security headers middleware
-- [ ] **Add request/response validation**
+- [x] **Add request/response validation**
 
 ---
 
@@ -122,15 +122,15 @@
 ### **Week 4: Advanced Features** (12-15 hours)
 
 #### Day 1-3: Authentication & Authorization (6-7 hours)
-- [ ] **Add User model and database table**
+- [x] **Add User model and database table**
   - `users` table with email, hashed_password
   - Relationship: User has many Todos
-- [ ] **Implement JWT authentication**
+- [x] **Implement JWT authentication**
   - Install `python-jose`, `passlib`, `bcrypt`
   - Create `/auth/register` endpoint
   - Create `/auth/login` endpoint (returns JWT token)
   - Create `/auth/me` endpoint (get current user)
-- [ ] **Add authentication dependency**
+- [x] **Add authentication dependency**
   - `get_current_user` dependency
   - Protect all Todo endpoints
   - Users can only access their own todos
