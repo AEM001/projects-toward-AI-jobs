@@ -439,6 +439,12 @@ app.include_router(router)
 
 @app.on_event("startup")
 async def startup_event():
+    from alembic.config import Config
+    from alembic import command
+
+    alembic_cfg=Config("alembic.ini")
+    command.upgrade(alembic_cfg,"head")
+
     logger.info("application startup complete -database tables created")
 
 

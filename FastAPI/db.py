@@ -38,5 +38,6 @@ class UserDB(Base):
     email=Column(String,unique=True,nullable=False)
     hashed_password=Column(String,nullable=False)
     todos=relationship("TodoDB",back_populates="owner")
-# create table
-Base.metadata.create_all(bind=engine)
+    # balance=Column(Integer,default=0)
+# # create table
+# Base.metadata.create_all(bind=engine)
