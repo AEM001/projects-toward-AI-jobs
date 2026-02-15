@@ -83,13 +83,13 @@
 ### **Week 3: Testing Foundation** (12-15 hours)
 
 #### Day 1-2: Setup Testing Framework (3-4 hours)
-- [ ] **Install pytest and dependencies**
+- [x] **Install pytest and dependencies**
   - `pytest`, `pytest-cov`, `httpx`
-- [ ] **Create test database setup**
+- [x] **Create test database setup**
   - Separate test database
   - Fixtures for database session
   - Setup/teardown for each test
-- [ ] **Create `tests/` directory structure**
+- [x] **Create `tests/` directory structure**
   - `tests/test_crud.py`
   - `tests/test_services.py`
   - `tests/test_api.py`
@@ -136,13 +136,13 @@
   - Users can only access their own todos
 
 #### Day 4-5: Database Migrations (3-4 hours)
-- [ ] **Setup Alembic** for database migrations
+- [x] **Setup Alembic** for database migrations
   - Install `alembic`
   - Initialize Alembic
   - Create initial migration
-- [ ] **Create migration for Users table**
-- [ ] **Add migration for User-Todo relationship**
-- [ ] **Learn migration workflow**
+- [x] **Create migration for Users table**
+- [x] **Add migration for User-Todo relationship**
+- [x] **Learn migration workflow**
   - Create, upgrade, downgrade migrations
 
 #### Day 6-7: Background Tasks & Async (3-4 hours)
