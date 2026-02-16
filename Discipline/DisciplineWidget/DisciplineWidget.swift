@@ -101,19 +101,24 @@ struct DisciplineWidgetEntryView : View {
             } else {
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(entry.tasks.prefix(taskLimit)) { task in
-                        Button(intent: ToggleTaskIntent(taskId: task.id.uuidString)) {
-                            HStack(spacing: 7) {
+                        HStack(alignment: .top, spacing: 7) {
+                            Button(intent: ToggleTaskIntent(taskId: task.id.uuidString)) {
                                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                                     .font(.system(size: 13))
                                     .foregroundStyle(task.isCompleted ? .green : .secondary)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Link(destination: URL(string: "discipline://open")!) {
                                 Text(task.title)
                                     .font(.system(size: 12.5))
                                     .strikethrough(task.isCompleted)
                                     .foregroundStyle(task.isCompleted ? .secondary : .primary)
-                                    .lineLimit(1)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 Spacer(minLength: 0)

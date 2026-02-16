@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import AppKit
 
 struct TaskListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -213,12 +214,22 @@ struct TaskListView: View {
     }
     
     private func handleDeepLink(_ url: URL) {
-        if url.absoluteString == "discipline://add" {
+        NSApp.activate()
+        if let window = NSApp.windows.first(where: { $0.title == "Discipline" || (!$0.title.isEmpty && $0.isVisible) }) {
+            window.makeKeyAndOrderFront(nil)
+        } else if let window = NSApp.windows.first(where: { !$0.title.isEmpty }) {
+            window.makeKeyAndOrderFront(nil)
+        }
+        
+        if url.host == "add" {
             selectedView = .today
             selectedDate = Date()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isInputFocused = true
             }
+        } else if url.host == "open" {
+            selectedView = .today
+            selectedDate = Date()
         }
     }
 }
