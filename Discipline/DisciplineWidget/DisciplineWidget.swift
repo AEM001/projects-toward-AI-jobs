@@ -78,11 +78,12 @@ struct DisciplineWidgetEntryView : View {
                 Text("Today")
                     .font(.system(size: 15, weight: .semibold))
                 Spacer()
-                Link(destination: URL(string: "discipline://add")!) {
+                Button(intent: AddTaskIntent()) {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 17))
                         .foregroundStyle(.blue)
                 }
+                .buttonStyle(.plain)
             }
             .padding(.bottom, 2)
             

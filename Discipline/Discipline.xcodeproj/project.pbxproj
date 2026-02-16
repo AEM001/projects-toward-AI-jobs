@@ -69,6 +69,7 @@
 		04615E8E2F34C6C700ACC5F1 /* Exceptions for "DisciplineWidget" folder in "Discipline" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AddTaskIntent.swift,
 				DisciplineWidget.swift,
 				ToggleTaskIntent.swift,
 			);
