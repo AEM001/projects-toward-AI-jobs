@@ -80,6 +80,17 @@ struct TaskListView: View {
         .onOpenURL { url in
             handleDeepLink(url)
         }
+        .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("com.albert.Discipline.addTask"))) { _ in
+            NSApp.activate()
+            if let window = NSApp.windows.first(where: { $0.title == "Discipline" || (!$0.title.isEmpty && $0.isVisible) }) {
+                window.makeKeyAndOrderFront(nil)
+            }
+            selectedView = .today
+            selectedDate = Date()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isInputFocused = true
+            }
+        }
         .sheet(item: $editingTask) { task in
             TaskEditSheet(task: task, onSave: {
                 editingTask = nil
