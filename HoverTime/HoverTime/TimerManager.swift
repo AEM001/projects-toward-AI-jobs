@@ -30,12 +30,10 @@ enum DisplayColor: String, CaseIterable {
 }
 
 enum DisplayFont: String, CaseIterable {
-    case system = "SF Pro"
-    case mono = "SF Mono"
-    case rounded = "SF Rounded"
     case newYork = "New York"
-    case helveticaNeue = "Helvetica Neue"
-    case avenir = "Avenir Next"
+    case sfProHeavy = "SF Pro Heavy"
+    case impact = "Impact"
+    case arialBlack = "Arial Black"
 }
 
 class TimerManager: ObservableObject {
@@ -73,7 +71,7 @@ class TimerManager: ObservableObject {
     @Published var showShadow: Bool = false
     @Published var clickThrough: Bool = false
     @Published var displayColor: DisplayColor = .cyan
-    @Published var displayFont: DisplayFont = .system
+    @Published var displayFont: DisplayFont = .newYork
 
     // MARK: - Sound
     @Published var soundEnabled: Bool = true

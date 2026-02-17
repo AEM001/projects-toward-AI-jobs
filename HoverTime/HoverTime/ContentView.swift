@@ -57,20 +57,16 @@ struct ContentView: View {
         }
     }
 
-    private func timeFont(size: CGFloat, weight: Font.Weight = .thin) -> Font {
+    private func timeFont(size: CGFloat, weight: Font.Weight = .semibold) -> Font {
         switch manager.displayFont {
-        case .system:
-            return .system(size: size, weight: weight, design: .default)
-        case .mono:
-            return .system(size: size, weight: weight, design: .monospaced)
-        case .rounded:
-            return .system(size: size, weight: weight, design: .rounded)
         case .newYork:
-            return .system(size: size, weight: weight, design: .serif)
-        case .helveticaNeue:
-            return Font.custom("HelveticaNeue-Thin", size: size)
-        case .avenir:
-            return Font.custom("AvenirNext-UltraLight", size: size)
+            return .system(size: size, weight: .semibold, design: .serif)
+        case .sfProHeavy:
+            return .system(size: size, weight: .semibold, design: .default)
+        case .impact:
+            return Font.custom("Impact", size: size)
+        case .arialBlack:
+            return Font.custom("Arial-BoldMT", size: size)
         }
     }
 
