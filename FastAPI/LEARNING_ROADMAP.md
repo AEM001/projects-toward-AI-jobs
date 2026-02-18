@@ -96,13 +96,13 @@
   - `tests/conftest.py` (shared fixtures)
 
 #### Day 3-5: Write Unit Tests (5-6 hours)
-- [ ] **Test CRUD functions** (`test_crud.py`)
+- [x] **Test CRUD functions** (`test_crud.py`)
   - Test `create_todo`
   - Test `list_todos`
   - Test `get_todo` (found and not found)
   - Test `update_todo`
   - Test `delete_todo`
-- [ ] **Test service layer** (`test_services.py`)
+- [x] **Test service layer** (`test_services.py`)
   - Test error handling (404 cases)
   - Test business logic
 

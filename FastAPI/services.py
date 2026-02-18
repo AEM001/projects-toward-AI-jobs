@@ -16,7 +16,16 @@ request_logger=get_request_logger()
 def create_todo_service(db: Session, todo: TodoCreate,user_id:int) -> Todo:
     """创建 Todo - 业务层"""
     logger.info(f"Creating todo with title:{todo.title} for user:{user_id} ")
-    db_todo=TodoDB(title=todo.title,ddl=todo.parse_datatime(todo.ddl)if todo.ddl else None,owner_id=user_id)
+    
+    # Parse ddl if provided
+    ddl_datetime = None
+    if todo.ddl:
+        try:
+            ddl_datetime = datetime.strptime(todo.ddl, "%Y-%m-%d %H:%M")
+        except ValueError:
+            logger.warning(f"Invalid ddl format: {todo.ddl}, using None")
+    
+    db_todo=TodoDB(title=todo.title,ddl=ddl_datetime,owner_id=user_id)
     db.add(db_todo)
     db.commit()
     db.refresh(db_todo)
@@ -45,12 +54,12 @@ def list_todos_service(
 
     logger.info(f"--listing todos for user:{user_id} with filters and sorting:skip={skip},limit={limit},title={title},filter_today={filter_today},filter_week={filter_week},sort_by={sort_by},sort_order={sort_order}")
     # get paginated results and total count from CRUD
-    todos,total=crud.list_todos(db,skip,limit,title=title,filter_today=filter_today,filter_week=filter_week,
-                               sort_by=sort_by, sort_order=sort_order, user_id=user_id)
+    todos,total=crud.list_todos(db,user_id=user_id,skip=skip,limit=limit,title=title,filter_today=filter_today,filter_week=filter_week,
+                               sort_by=sort_by, sort_order=sort_order)
     logger.info(f"listed {len(todos)} todos out of {total} total")
     
     page=skip//limit if limit>0 else 0
-    pages=(total+limit-1)//limit if limit>0 else 1
+    pages=max(1, (total+limit-1)//limit) if limit>0 else 1
     # Convert to response models with formatted ddl
     todo_items=[
         Todo(
