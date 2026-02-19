@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter, status
+from fastapi import FastAPI, Depends, Request, HTTPException, APIRouter, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from log_config import setup_logging, get_request_logger
 from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
 import services
 from config import settings
+from email_service import send_todo_created_email
 
 
 from passlib.context import CryptContext
@@ -142,6 +143,39 @@ async def log_requests(request, call_next):
 
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
+# Request timing middleware - measures request duration and logs slow requests
+@app.middleware("http")
+async def request_timing_middleware(request: Request, call_next):
+    import time
+    
+    start_time = time.time()
+    
+    # Process the request
+    response = await call_next(request)
+    
+    # Calculate duration
+    duration = time.time() - start_time
+    
+    # Add timing header to response (helpful for debugging)
+    response.headers["X-Request-Duration"] = f"{duration:.4f}s"
+    
+    # Log all requests with timing info
+    logger.info(
+        f"Request timing | {request.method} {request.url.path} | "
+        f"Duration: {duration:.4f}s | Status: {response.status_code}"
+    )
+    
+    # Warn about slow requests (e.g., > 1 second)
+    SLOW_REQUEST_THRESHOLD = 1.0  # seconds
+    if duration > SLOW_REQUEST_THRESHOLD:
+        logger.warning(
+            f"SLOW REQUEST DETECTED | {request.method} {request.url.path} | "
+            f"Duration: {duration:.4f}s | Status: {response.status_code} | "
+            f"Query: {request.query_params}"
+        )
+    
+    return response
+
 # security headers
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -255,8 +289,19 @@ Create a new TODO task with the provided information.
 The task will be created with a default status of 'pending' and current timestamp."""
           )
 @limiter.limit("20/minute")
-def create_todo(request: Request, todo: TodoCreate,current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
-    return services.create_todo_service(db, todo,current_user.id)
+def create_todo(request: Request, todo: TodoCreate, background_tasks: BackgroundTasks, current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
+    # Create the todo
+    result = services.create_todo_service(db, todo,current_user.id)
+    
+    # Add background task to send email notification
+    background_tasks.add_task(
+        send_todo_created_email, 
+        user_email=current_user.email, 
+        todo_title=result.title, 
+        todo_ddl=result.ddl
+    )
+    
+    return result
 
 
 @router.get("/todos", response_model=TodoListResponse, tags=["Todos"], 

@@ -113,7 +113,7 @@
   - Test GET `/todos/{id}` (found and 404)
   - Test PUT `/todos/{id}` (success, 404, validation)
   - Test DELETE `/todos/{id}` (success and 404)
-- [ ] **Add test coverage reporting**
+- [x] **Add test coverage reporting**
   - Aim for >80% coverage
   - Generate HTML coverage report
 
@@ -146,7 +146,7 @@
   - Create, upgrade, downgrade migrations
 
 #### Day 6-7: Background Tasks & Async (3-4 hours)
-- [ ] **Add background task example**
+- [x] **Add background task example**
   - Send email notification when todo created (mock)
   - Use FastAPI's `BackgroundTasks`
 - [ ] **Convert to async/await** (optional advanced)
