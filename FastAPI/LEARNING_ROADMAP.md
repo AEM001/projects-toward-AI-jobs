@@ -107,7 +107,7 @@
   - Test business logic
 
 #### Day 6-7: Integration Tests (4-5 hours)
-- [ ] **Test API endpoints** (`test_api.py`)
+- [x] **Test API endpoints** (`test_api.py`)
   - Test POST `/todos` (success and validation errors)
   - Test GET `/todos` (empty, with data, pagination)
   - Test GET `/todos/{id}` (found and 404)

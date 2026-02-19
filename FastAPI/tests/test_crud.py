@@ -49,7 +49,9 @@ class TestListTodos:
         assert total==1
     
     def test_list_todos_with_filter_today(self,test_db,test_user):
-        create_todo(test_db,TodoCreate(title="finish task",ddl="2026-02-15 19:00"),test_user.id)
+        from datetime import date
+        today_str = date.today().strftime("%Y-%m-%d")
+        create_todo(test_db,TodoCreate(title="finish task",ddl=f"{today_str} 19:00"),test_user.id)
         create_todo(test_db,TodoCreate(title="plan task",ddl="2026-02-16 19:00"),test_user.id)
         todos,total=list_todos(test_db,test_user.id,filter_today=True,filter_week=False)
         assert total==1

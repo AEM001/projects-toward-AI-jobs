@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from db import Base, TodoDB, UserDB
-from main import app, get_db, get_current_user
+from main import app, get_db, get_current_user, create_access_token
 from schemas import User
 import os
 
@@ -50,16 +50,13 @@ def test_user(test_db):
 
 @pytest.fixture(scope="function")
 def auth_client(client, test_user):
-    """Create an authenticated test client"""
-    response = client.post(
-        "/auth/login",
-        json={"email": "test@gmail.com", "password": "test_password"}
-    )
-    token = response.json()["access_token"]
+    """Create an authenticated test client with JWT token"""
+    # Create token directly instead of using login endpoint (avoids rate limiting)
+    access_token = create_access_token(data={"sub": test_user.email})
     
     client.headers = {
         **client.headers,
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {access_token}"
     }
     return client
 
