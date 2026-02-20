@@ -22,21 +22,42 @@ def get_file_handler(log_file :str="app.log")->logging.Handler:
     return handler
 
 def setup_logging(
-    level:str="INFO",log_to_file:bool=False,log_file:str="app.log")->logging.Logger:
+    level:str="INFO",log_to_file:bool=True,log_file:str="app.log")->logging.Logger:
 
-    numeric_level=getattr(logging,level.upper(),logging.INFO)#confused
-# set root logger
+    numeric_level=getattr(logging,level.upper(),logging.INFO)
+    
+    # Build handlers list
+    handlers = [logging.StreamHandler(sys.stdout)]
+    if log_to_file:
+        file_handler = logging.FileHandler(log_file, mode='a')
+        file_handler.setFormatter(get_log_formatter())
+        file_handler.setLevel(logging.DEBUG)
+        handlers.append(file_handler)
+    
+    # Configure root logger first
+    logging.basicConfig(
+        level=numeric_level,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=handlers,
+        force=True
+    )
+    
+    # Set up our app logger
     logger=logging.getLogger("fastapi_todo")
     logger.setLevel(numeric_level)
-
     logger.handlers.clear()
 
     console_handler=get_console_handler()
     logger.addHandler(console_handler)
-    # optional file handler
+    
+    # Add file handler to app logger too
     if log_to_file:
-        file_handler = get_file_handler(log_file)
-        logger.addHandler(file_handler)
+        app_file_handler = get_file_handler(log_file)
+        logger.addHandler(app_file_handler)
+    
+    # Prevent propagation to avoid duplicate logs
+    logger.propagate = False
 
     return logger
 

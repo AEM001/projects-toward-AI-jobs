@@ -52,9 +52,9 @@ class Todo(BaseModel):
     owner_id:int
 
 class TodoUpdate(BaseModel):
-    ddl:str| None=Field(default=None, description="更新任务ddl，留空则不修改，格式: 'YYYY-MM-DD HH:MM'", json_schema_extra={"example": "2024-02-11 21:00"})
-    title:str| None=Field(default=None, description="更新任务标题，留空则不修改", json_schema_extra={"example": None})
-    done:bool| None=Field(default=None, description="更新任务状态，留空则不修改", json_schema_extra={"example": None})
+    ddl: str | None = Field(default=None, description="Update task deadline, leave empty to not modify, format: 'YYYY-MM-DD HH:MM'", json_schema_extra={"example": "2024-02-11 21:00"})
+    title: str | None = Field(default=None, description="Update task title, leave empty to not modify", json_schema_extra={"example": None})
+    done: bool | None = Field(default=None, description="Update task status, leave empty to not modify", json_schema_extra={"example": None})
 
 #Authentication schemas
 class UserBase(BaseModel):

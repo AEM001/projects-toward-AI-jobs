@@ -14,7 +14,7 @@ logger=setup_logging(level="INFO",log_to_file=True)
 request_logger=get_request_logger()
 
 def create_todo_service(db: Session, todo: TodoCreate,user_id:int) -> Todo:
-    """创建 Todo - 业务层"""
+    """Create Todo - Business Layer"""
     logger.info(f"Creating todo with title:{todo.title} for user:{user_id} ")
     
     # Parse ddl if provided
@@ -103,7 +103,7 @@ def get_todo_service(db: Session, todo_id: int, user_id: int) -> Todo:
 
 
 def update_todo_service(db: Session, todo_id: int, update: TodoUpdate, user_id: int) -> Todo:
-    """更新 Todo - 不存在则抛出 404"""
+    """Update Todo - Throw 404 if not found"""
     logger.info(f"Updating todo with id:{todo_id} for user:{user_id}")
     
     # Get existing todo and verify ownership
@@ -130,7 +130,7 @@ def update_todo_service(db: Session, todo_id: int, update: TodoUpdate, user_id: 
 
 
 def delete_todo_service(db: Session, todo_id: int, user_id: int) -> None:
-    """删除 Todo - 业务层"""
+    """Delete Todo - Business Layer"""
     logger.info(f"Deleting todo with id:{todo_id} for user:{user_id}")
     
     # Get existing todo and verify ownership
@@ -149,11 +149,11 @@ def delete_todo_service(db: Session, todo_id: int, user_id: int) -> None:
 
 
 # ========================================
-# 调试和实验服务
+# Debug and Experiment Services
 # ========================================
 
 def test_tx_fail_service(db: Session) -> None:
-    """测试事务自动回滚 - 将领域异常转换为 HTTP 异常"""
+    """Test transaction auto rollback - Convert domain exception to HTTP exception"""
     logger.info("testing transaction fail")
     try:
         crud.test_tx_fail(db)
@@ -163,18 +163,18 @@ def test_tx_fail_service(db: Session) -> None:
 
 
 def test_tx_atomic_service(db: Session) -> dict:
-    """测试原子性 - 多步操作中途失败应全部回滚"""
+    """Test atomicity - Multi-step operation failure should rollback all"""
     logger.info("testing transaction atomicity")
-    # 第一步：创建一个 todo
+    # Step 1: Create a todo
     todo1 = TodoDB(title="atomic test 1", done=False)
     db.add(todo1)
     db.flush()
     
-    # 第二步：再创建一个 todo
+    # Step 2: Create another todo
     todo2 = TodoDB(title="atomic test 2", done=False)
     db.add(todo2)
     db.flush()
     
-    # 第三步：故意抛出异常
+    # Step 3: Intentionally throw exception
     logger.error("Atomic test: intentional failure")
     raise HTTPException(status_code=400, detail="Atomic test: intentional failure")

@@ -24,7 +24,7 @@ def create_todo(db: Session, todo: TodoCreate,user_id:int) -> TodoDB:
     
     db_todo = TodoDB(title=todo.title, done=False, ddl=ddl_datetime,owner_id=user_id)
     db.add(db_todo)
-    db.flush()          # 让 id 生成，但不提交（提交由 get_db_tx 做）
+    db.flush()         
     db.refresh(db_todo)
     logger.debug(f"Todo created successfully in database with id:{db_todo.id}")
     return db_todo
@@ -107,15 +107,10 @@ def delete_todo(db: Session, todo_id: int, user_id: int) -> bool:
     logger.debug(f"Todo deleted successfully from database: id={db_todo.id}")
     return True
 
-# ========================================
-# 调试和实验函数
-# ========================================
 
 def test_tx_fail(db: Session) -> None:
-    """测试事务自动回滚 - 失败案例（抛出普通异常）"""
     db.add(TodoDB(title="tx fail", done=False))
     db.flush()
-    # 抛出异常会触发get_db_tx的rollback
     raise ValueError("force fail for testing")
 
 

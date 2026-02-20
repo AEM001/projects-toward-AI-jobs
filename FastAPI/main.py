@@ -7,6 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from db import SessionLocal,UserDB
 from schemas import TodoCreate, Todo, TodoUpdate,TodoListResponse ,PaginationParams,UserCreate,UserLogin,User,Token,TokenData
 from log_config import setup_logging, get_request_logger
+import logging as std_logging
 from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
 import services
 from config import settings
@@ -132,6 +133,16 @@ app.add_middleware(
 
 logger = setup_logging(level="DEBUG" if settings.debug_mode else "INFO", log_to_file=True)
 request_logger = get_request_logger()
+
+# Create dedicated file logger for timing logs
+timing_file_logger = std_logging.getLogger("timing_logger")
+timing_file_logger.setLevel(std_logging.INFO)
+timing_file_logger.handlers.clear()
+timing_file_handler = std_logging.FileHandler("/Users/Mac/code/project/FastAPI/app.log", mode='a')
+timing_file_handler.setFormatter(std_logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+timing_file_logger.addHandler(timing_file_handler)
+timing_file_logger.propagate = False
+
 # Create v1 router for API versioning
 router = APIRouter()
 
@@ -162,10 +173,13 @@ async def request_timing_middleware(request: Request, call_next):
     response.headers["X-Request-Duration"] = f"{duration:.4f}s"
     
     # Log all requests with timing info
-    logger.info(
-        f"Request timing | {request.method} {request.url.path} | "
-        f"Duration: {duration:.4f}s | Status: {response.status_code}"
-    )
+    from datetime import datetime
+    import os
+    log_line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} INFO timing_middleware Request timing | {request.method} {request.url.path} | Duration: {duration:.4f}s | Status: {response.status_code}\n"
+    log_path = os.path.join(os.path.dirname(__file__), "app.log")
+    with open(log_path, "a") as f:
+        f.write(log_line)
+    print(log_line.strip())
     
     # Warn about slow requests (e.g., > 1 second)
     SLOW_REQUEST_THRESHOLD = 1.0  # seconds
@@ -455,8 +469,6 @@ def delete_todo(id: int, current_user: User = Depends(get_current_user), db: Ses
 
 
 # ========================================
-# 🔬 调试和实验路由
-# ========================================
 
 @app.post("/debug/tx-fail", tags=["Debug"], summary="Test transaction failure",
 description="Test automatic rollback on transaction failure",
@@ -466,7 +478,6 @@ responses={
     }
 })
 def tx_fail(db: Session = Depends(get_db_tx)):
-    """测试事务自动回滚 - 失败案例"""
     services.test_tx_fail_service(db)
 
 @app.post("/debug/tx-atomic", tags=["Debug"], summary="Test transaction atomicity",
@@ -480,7 +491,6 @@ responses={
     }
 })
 def tx_atomic(db: Session = Depends(get_db_tx)):
-    """测试原子性 - 多步操作中途失败应全部回滚"""
     return services.test_tx_atomic_service(db)
 
 app.include_router(router)
