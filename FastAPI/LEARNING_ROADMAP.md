@@ -163,7 +163,7 @@
   - Install `redis` and `aioredis`
   - Cache frequently accessed todos
   - Cache invalidation on updates
-- [ ] **Add performance monitoring**
+- [x] **Add performance monitoring**
   - Request timing middleware
   - Slow query logging
 - [ ] **Database optimization**

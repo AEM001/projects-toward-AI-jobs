@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from schemas import TodoCreate, TodoUpdate
 from db import TodoDB
 from datetime import datetime,date,timedelta
@@ -33,7 +33,11 @@ def list_todos(db: Session,user_id:int,skip:int=0,limit:int=10,title:str|None=No
                sort_by: str = "ddl", sort_order: str = "asc") -> tuple[list[TodoDB],int]:
 
     logger.debug(f"Listing all todos with pagination: skip={skip}, limit={limit},title={title},filter_today={filter_today},filter_week={filter_week},sort_by={sort_by},sort_order={sort_order}")
-    query=db.query(TodoDB).filter(TodoDB.owner_id==user_id)
+    
+    # Use joinedload to prevent N+1 queries when accessing todo.owner
+    query=db.query(TodoDB).options(
+        joinedload(TodoDB.owner)  # Eager load owner relationship
+    ).filter(TodoDB.owner_id==user_id)
     if title:
         query=query.filter(TodoDB.title.ilike(f"%{title}%"))
     if filter_today:

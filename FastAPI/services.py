@@ -82,7 +82,6 @@ def list_todos_service(
 
 
 def get_todo_service(db: Session, todo_id: int, user_id: int) -> Todo:
-    """获取单个 Todo - 业务层"""
     logger.info(f"Getting todo with id:{todo_id} for user:{user_id}")
     
     # Get todo and verify ownership
