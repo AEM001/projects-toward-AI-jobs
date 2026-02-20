@@ -485,6 +485,21 @@ def tx_atomic(db: Session = Depends(get_db_tx)):
 
 app.include_router(router)
 
+@app.get("/health", tags=["Health"], summary="Health check endpoint")
+def health_check():
+    """
+    Health check endpoint to verify the API is running.
+    
+    Returns:
+        - **status**: "healthy" if the service is operational
+        - **timestamp**: Current server time in ISO format
+    """
+    from datetime import datetime
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 @app.on_event("startup")
 async def startup_event():
     from alembic.config import Config
