@@ -38,5 +38,8 @@ class Settings(BaseSettings):
     rate_limit_create: str = "20/minute"
     rate_limit_sensitive: str = "10/minute"
 
+    # Slow query threshold (seconds)
+    slow_query_threshold: float = Field(default=0.1, description="Threshold for slow query warnings")
+
 # Create global settings instance
 settings = Settings()

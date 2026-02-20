@@ -23,6 +23,8 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 from collections import defaultdict
 
+from database_middleware import query_timer
+
 limiter=Limiter(key_func=get_remote_address)
 
 # use redis in production

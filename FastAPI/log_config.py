@@ -44,3 +44,9 @@ def get_request_logger()->logging.Logger:
     # get logger specifically for request logging
     return logging.getLogger("fastapi_todo.requests")
 
+def get_slow_query_logger()->logging.Logger:
+    # get logger specifically for slow query logging
+    logger = logging.getLogger("slow_query")
+    logger.setLevel(logging.WARNING)
+    return logger
+
