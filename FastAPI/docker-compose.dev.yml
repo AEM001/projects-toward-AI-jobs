@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # FastAPI Application (Development)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-todo-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      # Database Configuration (SQLite for development)
+      DATABASE_URL: sqlite:///./f.db
+      
+      # API Configuration
+      API_TITLE: Simple Todo API (Dev)
+      API_VERSION: 1.0.0
+      API_DESCRIPTION: Development version of TODO management API
+      DEBUG_MODE: true
+      
+      # CORS Configuration (allow all for development)
+      CORS_ORIGINS: '["*"]'
+      CORS_ALLOW_CREDENTIALS: true
+      CORS_ALLOW_METHODS: '["*"]'
+      CORS_ALLOW_HEADERS: '["*"]'
+      
+      # JWT Configuration (dev key)
+      SECRET_KEY: dev-secret-key-change-in-production
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      
+      # Rate Limiting (relaxed for development)
+      RATE_LIMIT_REQUESTS: 1000
+      RATE_LIMIT_WINDOW: 60
+      
+      # Slow Query Threshold (seconds)
+      SLOW_QUERY_THRESHOLD: 0.1
+    volumes:
+      - .:/app
+      - ./f.db:/app/f.db
+    restart: unless-stopped
+    networks:
+      - fastapi-dev-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # PostgreSQL (Optional, for testing production setup)
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: fastapi-todo-postgres-dev
+    environment:
+      POSTGRES_DB: fastapi_db_dev
+      POSTGRES_USER: fastapi_user
+      POSTGRES_PASSWORD: fastapi_pass
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - fastapi-dev-network
+    profiles:
+      - postgres
+
+  # Redis (Optional, for testing)
+  redis-dev:
+    image: redis:7-alpine
+    container_name: fastapi-todo-redis-dev
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_dev_data:/data
+    restart: unless-stopped
+    networks:
+      - fastapi-dev-network
+    profiles:
+      - redis
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  fastapi-dev-network:
+    driver: bridge

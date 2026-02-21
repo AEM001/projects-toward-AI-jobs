@@ -169,14 +169,14 @@
 - [x] **Database optimization**
   - Add indexes where needed
   - Use `select_related` to avoid N+1 queries
-- [ ] **Add health check endpoint** (`/health`)
+- [x] **Add health check endpoint** (`/health`)
 
 #### Week 6: Deployment & Documentation (5-6 hours)
-- [ ] **Create `requirements.txt`** with all dependencies
-- [ ] **Create `Dockerfile`**
+- [x] **Create `requirements.txt`** with all dependencies
+- [x] **Create `Dockerfile`**
   - Multi-stage build
   - Optimize image size
-- [ ] **Create `docker-compose.yml`**
+- [x] **Create `docker-compose.yml`**
   - API service
   - PostgreSQL database (upgrade from SQLite)
   - Redis (if using caching)
