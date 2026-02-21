@@ -374,7 +374,7 @@ Run through this quick checklist:
 - [ ] User isolation works
 - [ ] Database indexes created
 - [ ] Migrations applied
-- [ ] Background tasks execute
+- [x] Background tasks execute
 - [ ] API docs accessible
 
 ---

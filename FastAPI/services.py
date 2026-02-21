@@ -148,33 +148,3 @@ def delete_todo_service(db: Session, todo_id: int, user_id: int) -> None:
     logger.info(f"Todo deleted successfully: {existing_todo.title}")
 
 
-# ========================================
-# Debug and Experiment Services
-# ========================================
-
-def test_tx_fail_service(db: Session) -> None:
-    """Test transaction auto rollback - Convert domain exception to HTTP exception"""
-    logger.info("testing transaction fail")
-    try:
-        crud.test_tx_fail(db)
-    except ValueError as e:
-        logger.error(f"transaction failed: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-def test_tx_atomic_service(db: Session) -> dict:
-    """Test atomicity - Multi-step operation failure should rollback all"""
-    logger.info("testing transaction atomicity")
-    # Step 1: Create a todo
-    todo1 = TodoDB(title="atomic test 1", done=False)
-    db.add(todo1)
-    db.flush()
-    
-    # Step 2: Create another todo
-    todo2 = TodoDB(title="atomic test 2", done=False)
-    db.add(todo2)
-    db.flush()
-    
-    # Step 3: Intentionally throw exception
-    logger.error("Atomic test: intentional failure")
-    raise HTTPException(status_code=400, detail="Atomic test: intentional failure")

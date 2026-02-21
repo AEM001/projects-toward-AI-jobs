@@ -184,11 +184,10 @@ async def request_timing_middleware(request: Request, call_next):
     # Warn about slow requests (e.g., > 1 second)
     SLOW_REQUEST_THRESHOLD = 1.0  # seconds
     if duration > SLOW_REQUEST_THRESHOLD:
-        logger.warning(
-            f"SLOW REQUEST DETECTED | {request.method} {request.url.path} | "
-            f"Duration: {duration:.4f}s | Status: {response.status_code} | "
-            f"Query: {request.query_params}"
-        )
+        warning_line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} WARNING timing_middleware SLOW REQUEST DETECTED | {request.method} {request.url.path} | Duration: {duration:.4f}s | Status: {response.status_code} | Query: {request.query_params}\n"
+        with open(log_path, "a") as f:
+            f.write(warning_line)
+        print(warning_line.strip())
     
     return response
 
@@ -251,7 +250,7 @@ async def database_exception_handler(request, exc):
 
 
 
-# 读依赖
+
 def get_db():
     db = SessionLocal()
     try:
@@ -259,7 +258,7 @@ def get_db():
     finally:
         db.close()
 
-# 写依赖：统一事务
+
 def get_db_tx():
     db = SessionLocal()
     try:
@@ -304,7 +303,7 @@ Create a new TODO task with the provided information.
 
 The task will be created with a default status of 'pending' and current timestamp."""
           )
-@limiter.limit("20/minute")
+@limiter.limit("200/minute")
 def create_todo(request: Request, todo: TodoCreate, background_tasks: BackgroundTasks, current_user:User=Depends(get_current_user),db: Session = Depends(get_db_tx)):
     # Create the todo
     result = services.create_todo_service(db, todo,current_user.id)
@@ -470,30 +469,15 @@ def delete_todo(id: int, current_user: User = Depends(get_current_user), db: Ses
 
 # ========================================
 
-@app.post("/debug/tx-fail", tags=["Debug"], summary="Test transaction failure",
-description="Test automatic rollback on transaction failure",
-responses={
-    500: {
-        "description": "Internal server error due to transaction failure"
-    }
-})
-def tx_fail(db: Session = Depends(get_db_tx)):
-    services.test_tx_fail_service(db)
-
-@app.post("/debug/tx-atomic", tags=["Debug"], summary="Test transaction atomicity",
-description="Test atomicity - all operations in transaction succeed or all fail",
-responses={
-    200: {
-        "description": "Transaction succeeded"
-    },
-    500: {
-        "description": "Transaction failed and rolled back"
-    }
-})
-def tx_atomic(db: Session = Depends(get_db_tx)):
-    return services.test_tx_atomic_service(db)
 
 app.include_router(router)
+
+@app.get("/debug/slow", tags=["Debug"], summary="Simulate slow query")
+def debug_slow():
+    """Test slow request warning - sleeps for 1.5 seconds"""
+    import time
+    time.sleep(1.5)  # This will trigger the >1s warning
+    return {"message": "This was a slow request", "slept": "1.5 seconds"}
 
 @app.get("/health", tags=["Health"], summary="Health check endpoint")
 def health_check():

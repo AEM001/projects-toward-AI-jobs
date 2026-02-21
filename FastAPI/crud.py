@@ -108,12 +108,6 @@ def delete_todo(db: Session, todo_id: int, user_id: int) -> bool:
     return True
 
 
-def test_tx_fail(db: Session) -> None:
-    db.add(TodoDB(title="tx fail", done=False))
-    db.flush()
-    raise ValueError("force fail for testing")
-
-
 
 
 

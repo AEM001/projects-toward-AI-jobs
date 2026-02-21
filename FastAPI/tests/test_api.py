@@ -299,15 +299,3 @@ class TestValidationAPI:
         assert response.status_code in [201, 422]
 
 
-class TestDebugAPI:
-    """Test debug endpoints"""
-
-    def test_tx_fail(self, auth_client):
-        """Test transaction failure endpoint"""
-        response = auth_client.post("/debug/tx-fail")
-        assert response.status_code == 400
-
-    def test_tx_atomic(self, auth_client):
-        """Test transaction atomicity endpoint"""
-        response = auth_client.post("/debug/tx-atomic")
-        assert response.status_code == 400
