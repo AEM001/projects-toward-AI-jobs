@@ -5,7 +5,7 @@ from typing import List, Optional
 
 class Settings(BaseSettings):
 
-    database_url:str=Field(default="sqlite:///./test.db",description="Database URL")
+    database_url:str=Field(default="sqlite:///./f.db",description="Database URL")
 
     # API settings
     api_title: str = Field(default="Simple Todo API", description="API title")
