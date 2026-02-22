@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
-from schemas import TodoCreate, TodoUpdate
-from db import TodoDB
-from datetime import datetime,date,timedelta
+from src.schemas.todo import TodoCreate, TodoUpdate
+from src.models.todo import TodoDB
+from datetime import datetime, date, timedelta
 import logging
 logger = logging.getLogger("fastapi_todo.crud")
 

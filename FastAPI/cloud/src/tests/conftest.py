@@ -2,9 +2,13 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
-from db import Base, TodoDB, UserDB
-from main import app, get_db, get_current_user, create_access_token
-from schemas import User
+from src.models.base import Base
+from src.models.todo import TodoDB
+from src.models.user import UserDB
+from src.core.main import app
+from src.api.deps import get_db
+from src.core.security import create_access_token, get_password_hash
+from src.schemas.user import User
 import os
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -40,7 +44,6 @@ def client(test_db):
 
 @pytest.fixture(scope="function")
 def test_user(test_db):
-    from main import get_password_hash
     user=UserDB(email="test@gmail.com",
     hashed_password=get_password_hash("test_password"))  
     test_db.add(user)

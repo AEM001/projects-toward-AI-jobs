@@ -45,3 +45,20 @@ htmlcov/
 
 # macOS
 .DS_Store
+
+# Node.js / Frontend
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Frontend build outputs
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# TypeScript
+*.tsbuildinfo

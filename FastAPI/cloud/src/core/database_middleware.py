@@ -6,8 +6,8 @@ import time
 import os
 from datetime import datetime
 from sqlalchemy import event
-from db import engine
-from config import settings
+from src.db.session import engine
+from src.core.config import settings
 
 # Threshold for slow queries (in seconds)
 SLOW_QUERY_THRESHOLD = settings.slow_query_threshold  # 100ms for SQLite, adjust for production

@@ -1,13 +1,13 @@
 from sqlalchemy.engine import Result
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from schemas import TodoCreate, TodoUpdate, Todo,TodoListResponse
-from db import TodoDB
-import crud
-from datetime import datetime,date,timedelta
+from src.schemas.todo import TodoCreate, TodoUpdate, Todo, TodoListResponse
+from src.models.todo import TodoDB
+from src.db import crud
+from datetime import datetime, date, timedelta
 
-from log_config import setup_logging, get_request_logger
-from exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
+from src.core.logging import setup_logging, get_request_logger
+from src.core.exceptions import TodoNotFoundException, TodoValidationException, DatabaseException
 
 
 logger=setup_logging(level="INFO",log_to_file=True)
