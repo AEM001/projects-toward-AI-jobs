@@ -1,7 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Todo, CreateTodoRequest } from './api/todos/route';
+
+// TypeScript interfaces (same as FastAPI models)
+interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+  createdAt: string;
+}
+
+interface CreateTodoRequest {
+  title: string;
+}
+
+const API_URL = 'http://localhost:8000';  // FastAPI backend
 
 export default function Home(): React.ReactElement {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -15,7 +28,7 @@ export default function Home(): React.ReactElement {
 
   async function fetchTodos(): Promise<void> {
     try {
-      const response = await fetch('/api/todos');
+      const response = await fetch(`${API_URL}/todos`);  // Call FastAPI
       const data: Todo[] = await response.json();
       setTodos(data);
     } catch (error) {
@@ -32,7 +45,7 @@ export default function Home(): React.ReactElement {
     const request: CreateTodoRequest = { title: newTodo };
     
     try {
-      const response = await fetch('/api/todos', {
+      const response = await fetch(`${API_URL}/todos`, {  // Call FastAPI
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
@@ -50,7 +63,10 @@ export default function Home(): React.ReactElement {
 
   return (
     <main style={{ maxWidth: '600px', margin: '40px auto', padding: '0 20px' }}>
-      <h1>📝 Next.js + TypeScript Todo App</h1>
+      <h1>📝 Next.js + FastAPI Todo App</h1>
+      <p style={{ color: '#666', fontSize: '14px' }}>
+        Frontend: Next.js (port 3000) | Backend: FastAPI (port 8000)
+      </p>
       
       <form onSubmit={addTodo} style={{ marginBottom: '20px' }}>
         <input
