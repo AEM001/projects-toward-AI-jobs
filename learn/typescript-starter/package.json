@@ -1,0 +1,14 @@
+{
+  "name": "typescript-starter",
+  "version": "1.0.0",
+  "description": "Simple TypeScript project for learning",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && open index.html",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
