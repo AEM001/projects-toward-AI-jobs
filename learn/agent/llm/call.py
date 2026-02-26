@@ -1,0 +1,1 @@
+https://api.apicore.ai/v1/chat/completions
