@@ -1,0 +1,39 @@
+{
+  "id": "chatcmpl-DDrnG9YeGpfUPXMpTkPTAwJMIYtIg",
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "content": "{\"name\":\"Albert\",\"length\":20}",
+        "refusal": null,
+        "role": "assistant",
+        "annotations": [],
+        "audio": null,
+        "function_call": null,
+        "tool_calls": null
+      }
+    }
+  ],
+  "created": 1772197418,
+  "model": "gpt-4.1-nano-2025-04-14",
+  "object": "chat.completion",
+  "service_tier": null,
+  "system_fingerprint": "fp_490a4ad033",
+  "usage": {
+    "completion_tokens": 10,
+    "prompt_tokens": 58,
+    "total_tokens": 68,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "chatcmpl-DDry0ng153PZcCsN56OVuZzxvZplX",
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "content": "The current time in San Francisco is 5:14 AM on February 27, 2026.",
+        "refusal": null,
+        "role": "assistant",
+        "annotations": [],
+        "audio": null,
+        "function_call": null,
+        "tool_calls": null
+      }
+    }
+  ],
+  "created": 1772198084,
+  "model": "gpt-4.1-nano-2025-04-14",
+  "object": "chat.completion",
+  "service_tier": null,
+  "system_fingerprint": "fp_490a4ad033",
+  "usage": {
+    "completion_tokens": 22,
+    "prompt_tokens": 51,
+    "total_tokens": 73,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  }
+}

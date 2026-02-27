@@ -1,0 +1,53 @@
+{
+  "id": "chatcmpl-DDreh4iPrnDwrNLb9nDZiozS22df5",
+  "choices": [
+    {
+      "finish_reason": "length",
+      "index": 0,
+      "logprobs": null,
+      "message": {
+        "content": "Certainly! Here's an overview of some basic knowledge about TypeScript:\n\n### What is TypeScript?\n- **TypeScript** is a **superset of JavaScript** developed by Microsoft.\n- It adds **static typing** and **advanced features** to JavaScript.\n- Compiles down to plain JavaScript, making it compatible with all JavaScript environments.\n\n### Key Features of TypeScript\n1.",
+        "refusal": null,
+        "role": "assistant",
+        "annotations": [],
+        "audio": null,
+        "function_call": null,
+        "tool_calls": null
+      }
+    },
+    {
+      "finish_reason": "length",
+      "index": 1,
+      "logprobs": null,
+      "message": {
+        "content": "Sure! Here's some basic knowledge about TypeScript:\n\n### What is TypeScript?\nTypeScript is a **superset of JavaScript** developed and maintained by Microsoft. It adds static typing and other features to JavaScript, making it easier to write, maintain, and debug large codebases.\n\n### Key Features of TypeScript\n- **Static Typing:** Allows you to specify types for variables, function",
+        "refusal": null,
+        "role": "assistant",
+        "annotations": [],
+        "audio": null,
+        "function_call": null,
+        "tool_calls": null
+      }
+    }
+  ],
+  "created": 1772196887,
+  "model": "gpt-4.1-nano-2025-04-14",
+  "object": "chat.completion",
+  "service_tier": null,
+  "system_fingerprint": "fp_03e44fcc34",
+  "usage": {
+    "completion_tokens": 160,
+    "prompt_tokens": 15,
+    "total_tokens": 175,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  }
+}

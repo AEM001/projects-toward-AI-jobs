@@ -1,0 +1,4 @@
+User: What's the weather like in London?
+Tool call: get_weather
+Function result: 59°F, cloudy
+Final answer: The current weather in London is cloudy with a temperature of 59°F.
