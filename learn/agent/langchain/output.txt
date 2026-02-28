@@ -1,0 +1,121 @@
+{
+    'messages': [
+        {
+            'content': 'what is the weather in sf?',
+            'additional_kwargs': {},
+            'response_metadata': {},
+            'id': '783508f0-5ce1-4a69-b4d1-bd95d826f3be'
+        },
+        {
+            'content': '',
+            'additional_kwargs': {'refusal': None},
+            'response_metadata': {
+                'token_usage': {
+                    'completion_tokens': 46,
+                    'prompt_tokens': 57,
+                    'total_tokens': 103,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0
+                    },
+                    'prompt_tokens_details': {
+                        'audio_tokens': 0,
+                        'cached_tokens': 0
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-4.1-nano-2025-04-14',
+                'system_fingerprint': 'fp_03e44fcc34',
+                'id': 'chatcmpl-DE5aAaMh43SFcaV2RQFOfJEOSbJE8',
+                'finish_reason': 'tool_calls',
+                'logprobs': None
+            },
+            'id': 'lc_run--019ca25b-4e8a-7142-94d7-70d68fe358d9-0',
+            'tool_calls': [
+                {
+                    'name': 'get_weather',
+                    'args': {'city': 'San Francisco'},
+                    'id': 'call_BG8sCvxvSP93XK7fDxXHZA16',
+                    'type': 'tool_call'
+                },
+                {
+                    'name': 'get_weather',
+                    'args': {'city': 'SF'},
+                    'id': 'call_z5V5ag46QDfoYzvNIhj4meYr',
+                    'type': 'tool_call'
+                }
+            ],
+            'invalid_tool_calls': [],
+            'usage_metadata': {
+                'input_tokens': 57,
+                'output_tokens': 46,
+                'total_tokens': 103,
+                'input_token_details': {
+                    'audio': 0,
+                    'cache_read': 0
+                },
+                'output_token_details': {
+                    'audio': 0,
+                    'reasoning': 0
+                }
+            }
+        },
+        {
+            'content': 'The weather in San Francisco is sunny.',
+            'name': 'get_weather',
+            'id': '99ac47b0-adb9-41fb-b941-d0b99ab597ef',
+            'tool_call_id': 'call_BG8sCvxvSP93XK7fDxXHZA16'
+        },
+        {
+            'content': 'The weather in SF is sunny.',
+            'name': 'get_weather',
+            'id': '34fc91b4-af6c-4780-a592-b0e51696215b',
+            'tool_call_id': 'call_z5V5ag46QDfoYzvNIhj4meYr'
+        },
+        {
+            'content': 'The weather in San Francisco is sunny.',
+            'additional_kwargs': {'refusal': None},
+            'response_metadata': {
+                'token_usage': {
+                    'completion_tokens': 10,
+                    'prompt_tokens': 130,
+                    'total_tokens': 140,
+                    'completion_tokens_details': {
+                        'accepted_prediction_tokens': 0,
+                        'audio_tokens': 0,
+                        'reasoning_tokens': 0,
+                        'rejected_prediction_tokens': 0
+                    },
+                    'prompt_tokens_details': {
+                        'audio_tokens': 0,
+                        'cached_tokens': 0
+                    }
+                },
+                'model_provider': 'openai',
+                'model_name': 'gpt-4.1-nano-2025-04-14',
+                'system_fingerprint': 'fp_490a4ad033',
+                'id': 'chatcmpl-DE5aCBxqu1ZgdjjKKzZl8gXZyXNmc',
+                'finish_reason': 'stop',
+                'logprobs': None
+            },
+            'id': 'lc_run--019ca25b-5eab-7fe0-b871-7600990d7d70-0',
+            'tool_calls': [],
+            'invalid_tool_calls': [],
+            'usage_metadata': {
+                'input_tokens': 130,
+                'output_tokens': 10,
+                'total_tokens': 140,
+                'input_token_details': {
+                    'audio': 0,
+                    'cache_read': 0
+                },
+                'output_token_details': {
+                    'audio': 0,
+                    'reasoning': 0
+                }
+            }
+        }
+    ]
+}
