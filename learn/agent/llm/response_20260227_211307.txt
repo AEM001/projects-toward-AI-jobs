@@ -1,2 +1,0 @@
-Tool call: get_time
-Arguments: {"city":"San Francisco"}
